@@ -25,8 +25,12 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Environment files
+# Environment files (Firebase credentials - use Vercel environment variables instead)
+.env
 .env*
+.env.local
+.env.development
+.env.production
 
 # Logs
 *.log

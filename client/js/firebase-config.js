@@ -1,16 +1,22 @@
 // Firebase Configuration
-// Replace these values with your actual Firebase project credentials
-// Get them from: Firebase Console → Project Settings → General → Your apps → Web app
+// Option 1: Direct configuration (current - update values below)
+// Option 2: Use .env file with environment variables (requires build tool)
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBaoS2IqeDVhUJNu5WKbDxdxUfxV1ux5Xk",
+  authDomain: "skb-games.firebaseapp.com",
+  databaseURL: "https://skb-games-default-rtdb.firebaseio.com",  // ✅ Added - verify this URL in Firebase Console
+  projectId: "skb-games",
+  storageBucket: "skb-games.firebasestorage.app",
+  messagingSenderId: "377089739867",
+  appId: "1:377089739867:web:390ba21bce6d3c79c0437e"
 };
+
+// Note: For security in production:
+// 1. Keep .env file local (already in .gitignore)
+// 2. Add Firebase config as Vercel Environment Variables
+// 3. Or use Firebase App Check for additional security
 
 // Initialize Firebase
 let app, database, dbRef;
