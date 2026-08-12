@@ -6,7 +6,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyBaoS2IqeDVhUJNu5WKbDxdxUfxV1ux5Xk",
   authDomain: "skb-games.firebaseapp.com",
-  databaseURL: "https://skb-games-default-rtdb.firebaseio.com",  // ✅ Added - verify this URL in Firebase Console
+  databaseURL: "https://skb-games-default-rtdb.asia-southeast1.firebasedatabase.app",  // ✅ Fixed region
   projectId: "skb-games",
   storageBucket: "skb-games.firebasestorage.app",
   messagingSenderId: "377089739867",

@@ -79,29 +79,29 @@ class DotsAndBoxesApp {
     });
 
     // Create room screen
-    document.getElementById('createRoomSubmit').addEventListener('click', () => {
+    document.getElementById('createRoomConfirmBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.createRoom();
     });
 
-    document.getElementById('backFromCreate').addEventListener('click', () => {
+    document.getElementById('createRoomBackBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.showScreen('splashScreen');
     });
 
     // Join room screen
-    document.getElementById('joinRoomSubmit').addEventListener('click', () => {
+    document.getElementById('joinRoomConfirmBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.joinRoom();
     });
 
-    document.getElementById('backFromJoin').addEventListener('click', () => {
+    document.getElementById('joinRoomBackBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.showScreen('splashScreen');
     });
 
     // How to play screen
-    document.getElementById('backFromHowto').addEventListener('click', () => {
+    document.getElementById('howToPlayBackBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.showScreen('splashScreen');
     });
@@ -145,12 +145,12 @@ class DotsAndBoxesApp {
     });
 
     // Game over screen
-    document.getElementById('playAgainBtn').addEventListener('click', () => {
+    document.getElementById('rematchBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.requestRematch();
     });
 
-    document.getElementById('backToMenuBtn').addEventListener('click', () => {
+    document.getElementById('mainMenuBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.leaveGame();
     });
@@ -180,6 +180,11 @@ class DotsAndBoxesApp {
   setupAvatarSelection(containerId, inputId) {
     const container = document.getElementById(containerId);
     const input = document.getElementById(inputId);
+    
+    if (!container) {
+      console.warn(`Avatar container ${containerId} not found`);
+      return;
+    }
     
     container.querySelectorAll('.avatar-option').forEach(avatar => {
       avatar.addEventListener('click', () => {
