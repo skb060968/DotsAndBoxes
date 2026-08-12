@@ -1,0 +1,12 @@
+{
+  "name": "dots-and-boxes-pwa",
+  "version": "2.0.0",
+  "description": "A PWA multiplayer Dots and Boxes game with Firebase",
+  "scripts": {
+    "serve": "python -m http.server 8000 -d client",
+    "build": "echo 'No build step required - static site with Firebase'"
+  },
+  "keywords": ["pwa", "game", "multiplayer", "dots-and-boxes", "firebase"],
+  "author": "",
+  "license": "MIT"
+}

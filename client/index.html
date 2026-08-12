@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2c3e50">
+  <meta name="description" content="Play Dots and Boxes - A classic multiplayer game">
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
+  
+  <title>Dots and Boxes - Multiplayer Game</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Main Container -->
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <h1>🎮 Dots and Boxes</h1>
+      <div class="connection-status" id="connectionStatus">
+        <span class="status-indicator"></span>
+        <span class="status-text">Firebase Ready</span>
+      </div>
+    </header>
+
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="screen active">
+      <div class="splash-container">
+        <div class="game-logo">
+          <div class="logo-icon">
+            <div class="logo-dots">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="logo-lines">
+              <span class="line line-h"></span>
+              <span class="line line-v"></span>
+            </div>
+          </div>
+          <h1 class="game-title">Dots & Boxes</h1>
+          <p class="game-tagline">Connect. Complete. Conquer.</p>
+        </div>
+
+        <div class="splash-actions">
+          <button id="createRoomBtn" class="btn btn-primary btn-splash">
+            <span class="btn-icon">🏠</span>
+            <span class="btn-text">Create Room</span>
+          </button>
+          
+          <button id="joinRoomBtn" class="btn btn-secondary btn-splash">
+            <span class="btn-icon">🚪</span>
+            <span class="btn-text">Join Room</span>
+          </button>
+          
+          <button id="howToPlayBtn" class="btn btn-info btn-splash">
+            <span class="btn-icon">❓</span>
+            <span class="btn-text">How to Play</span>
+          </button>
+        </div>
+
+        <div class="splash-footer">
+          <p>Play with 2-4 friends in real-time!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Room Screen -->
+    <div id="createRoomScreen" class="screen">
+      <div class="room-container">
+        <h2>🏠 Create Room</h2>
+        
+        <div class="form-group">
+          <label for="hostNameInput">Your Name</label>
+          <input type="text" id="hostNameInput" class="form-input" maxlength="20" placeholder="Enter your name" value="">
+        </div>
+
+        <div class="form-group">
+          <label>Choose Your Avatar</label>
+          <div class="avatar-selector" id="hostAvatarSelector">
+            <div class="avatar-option" data-avatar="😀">😀</div>
+            <div class="avatar-option" data-avatar="😎">😎</div>
+            <div class="avatar-option" data-avatar="🤓">🤓</div>
+            <div class="avatar-option" data-avatar="😺">😺</div>
+            <div class="avatar-option" data-avatar="🐶">🐶</div>
+            <div class="avatar-option" data-avatar="🐼">🐼</div>
+            <div class="avatar-option" data-avatar="🦊">🦊</div>
+            <div class="avatar-option" data-avatar="🐸">🐸</div>
+            <div class="avatar-option" data-avatar="🦁">🦁</div>
+            <div class="avatar-option" data-avatar="🐯">🐯</div>
+            <div class="avatar-option" data-avatar="🦄">🦄</div>
+            <div class="avatar-option" data-avatar="🤖">🤖</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="maxPlayersInput">Maximum Players</label>
+          <div class="player-count-selector">
+            <button class="count-btn" data-count="2">2</button>
+            <button class="count-btn active" data-count="3">3</button>
+            <button class="count-btn" data-count="4">4</button>
+          </div>
+        </div>
+
+        <div class="room-actions">
+          <button id="createRoomConfirmBtn" class="btn btn-primary btn-large">
+            Create Room
+          </button>
+          <button id="createRoomBackBtn" class="btn btn-secondary">
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Room Screen -->
+    <div id="joinRoomScreen" class="screen">
+      <div class="room-container">
+        <h2>🚪 Join Room</h2>
+        
+        <div class="form-group">
+          <label for="guestNameInput">Your Name</label>
+          <input type="text" id="guestNameInput" class="form-input" maxlength="20" placeholder="Enter your name" value="">
+        </div>
+
+        <div class="form-group">
+          <label for="roomCodeInput">Room Code</label>
+          <input type="text" id="roomCodeInput" class="form-input room-code-input" maxlength="4" placeholder="ABCD">
+        </div>
+
+        <div class="form-group">
+          <label>Choose Your Avatar</label>
+          <div class="avatar-selector" id="guestAvatarSelector">
+            <div class="avatar-option" data-avatar="😀">😀</div>
+            <div class="avatar-option" data-avatar="😎">😎</div>
+            <div class="avatar-option" data-avatar="🤓">🤓</div>
+            <div class="avatar-option" data-avatar="😺">😺</div>
+            <div class="avatar-option" data-avatar="🐶">🐶</div>
+            <div class="avatar-option" data-avatar="🐼">🐼</div>
+            <div class="avatar-option" data-avatar="🦊">🦊</div>
+            <div class="avatar-option" data-avatar="🐸">🐸</div>
+            <div class="avatar-option" data-avatar="🦁">🦁</div>
+            <div class="avatar-option" data-avatar="🐯">🐯</div>
+            <div class="avatar-option" data-avatar="🦄">🦄</div>
+            <div class="avatar-option" data-avatar="🤖">🤖</div>
+          </div>
+        </div>
+
+        <div class="room-actions">
+          <button id="joinRoomConfirmBtn" class="btn btn-primary btn-large">
+            Join Room
+          </button>
+          <button id="joinRoomBackBtn" class="btn btn-secondary">
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to Play Screen -->
+    <div id="howToPlayScreen" class="screen">
+      <div class="howto-container">
+        <h2>❓ How to Play</h2>
+        
+        <div class="howto-content">
+          <div class="howto-section">
+            <h3>🎯 Objective</h3>
+            <p>Complete more boxes than your opponents to win the game!</p>
+          </div>
+
+          <div class="howto-section">
+            <h3>🎮 Gameplay</h3>
+            <ol>
+              <li><strong>Take Turns:</strong> Players take turns drawing lines between adjacent dots</li>
+              <li><strong>Complete Boxes:</strong> When you draw the 4th side of a box, you claim it and get another turn</li>
+              <li><strong>Keep Playing:</strong> Continue until all boxes are completed</li>
+              <li><strong>Win:</strong> The player with the most boxes wins!</li>
+            </ol>
+          </div>
+
+          <div class="howto-section">
+            <h3>🎨 Grid Layout</h3>
+            <p>The game uses an 11×6 grid of dots, creating 50 boxes to compete for. Each box you complete adds to your score!</p>
+          </div>
+
+          <div class="howto-section">
+            <h3>👥 Players</h3>
+            <p>Play with 2-4 players. The active player's card will glow green with a "TURN" badge.</p>
+          </div>
+
+          <div class="howto-section">
+            <h3>💡 Strategy Tip</h3>
+            <p>Try to avoid giving your opponent the chance to complete boxes. Sometimes it's better to draw lines that don't complete boxes!</p>
+          </div>
+        </div>
+
+        <div class="howto-actions">
+          <button id="howToPlayBackBtn" class="btn btn-primary btn-large">
+            Got it!
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waiting Screen -->
+    <div id="waitingScreen" class="screen">
+      <div class="waiting-container">
+        <div class="room-info-card">
+          <h2>🎮 Room Created!</h2>
+          <div class="room-code-display">
+            <label>Room Code</label>
+            <div class="room-code" id="displayRoomCode">----</div>
+            <div class="room-code-actions">
+              <button id="copyRoomCodeBtn" class="btn btn-small btn-copy">
+                📋 Copy Code
+              </button>
+              <button id="shareRoomBtn" class="btn btn-small btn-share">
+                🔗 Share Link
+              </button>
+              <button id="generateQRBtn" class="btn btn-small btn-qr">
+                📱 QR Code
+              </button>
+            </div>
+          </div>
+          
+          <div class="waiting-players" id="waitingPlayersList">
+            <p class="waiting-status">Waiting for players to join...</p>
+          </div>
+          
+          <div class="player-slots" id="playerSlots">
+            <!-- Player slots will be added here dynamically -->
+          </div>
+        </div>
+        
+        <button id="cancelWaitBtn" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📱 Scan to Join</h3>
+          <button id="closeQRModal" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="qrCodeContainer" class="qr-code-container"></div>
+          <div class="qr-info">
+            <p class="qr-room-code">Room Code: <strong id="qrRoomCode"></strong></p>
+            <p class="qr-instruction">Scan this QR code with your phone to join the game</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+      <!-- Player Cards Container -->
+      <div class="players-container" id="playersContainer">
+        <!-- Player cards will be dynamically added here -->
+      </div>
+
+      <!-- Game Canvas Container -->
+      <div class="canvas-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="turn-message" id="turnMessage">Your Turn!</div>
+      </div>
+
+      <!-- Game Controls -->
+      <div class="game-controls">
+        <button id="leaveGameBtn" class="btn btn-secondary">Leave Game</button>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen">
+      <div class="game-over-container">
+        <h2 id="gameOverTitle">Game Over!</h2>
+        <div class="winner-announcement" id="winnerAnnouncement"></div>
+        
+        <div class="final-scores" id="finalScoresContainer">
+          <!-- Final scores will be dynamically added here -->
+        </div>
+
+        <div class="game-over-actions">
+          <button id="rematchBtn" class="btn btn-primary">Play Again</button>
+          <button id="mainMenuBtn" class="btn btn-secondary">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  
+  <!-- Scripts -->
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/sounds.js"></script>
+  <script src="/js/qrcode.js"></script>
+  <script src="/js/game.js"></script>
+  <script src="/js/canvas.js"></script>
+  <script src="/js/app-firebase.js"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => console.log('SW registered:', registration))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
