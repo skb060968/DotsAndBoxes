@@ -81,7 +81,7 @@
         <div class="form-group">
           <label>Choose Your Avatar</label>
           <div class="avatar-selector" id="hostAvatarSelector">
-            <div class="avatar-option" data-avatar="😀">😀</div>
+            <div class="avatar-option selected" data-avatar="😀">😀</div>
             <div class="avatar-option" data-avatar="😎">😎</div>
             <div class="avatar-option" data-avatar="🤓">🤓</div>
             <div class="avatar-option" data-avatar="😺">😺</div>
@@ -93,15 +93,6 @@
             <div class="avatar-option" data-avatar="🐯">🐯</div>
             <div class="avatar-option" data-avatar="🦄">🦄</div>
             <div class="avatar-option" data-avatar="🤖">🤖</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="maxPlayersInput">Maximum Players</label>
-          <div class="player-count-selector">
-            <button class="count-btn" data-count="2">2</button>
-            <button class="count-btn active" data-count="3">3</button>
-            <button class="count-btn" data-count="4">4</button>
           </div>
         </div>
 
@@ -134,7 +125,7 @@
         <div class="form-group">
           <label>Choose Your Avatar</label>
           <div class="avatar-selector" id="guestAvatarSelector">
-            <div class="avatar-option" data-avatar="😀">😀</div>
+            <div class="avatar-option selected" data-avatar="😀">😀</div>
             <div class="avatar-option" data-avatar="😎">😎</div>
             <div class="avatar-option" data-avatar="🤓">🤓</div>
             <div class="avatar-option" data-avatar="😺">😺</div>
@@ -235,7 +226,12 @@
           </div>
         </div>
         
-        <button id="cancelWaitBtn" class="btn btn-secondary">Cancel</button>
+        <div class="waiting-actions">
+          <button id="startGameBtn" class="btn btn-primary btn-large" style="display: none;">
+            🎮 Start Game
+          </button>
+          <button id="cancelWaitBtn" class="btn btn-secondary">Leave Room</button>
+        </div>
       </div>
     </div>
 

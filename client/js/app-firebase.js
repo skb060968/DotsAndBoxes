@@ -107,6 +107,11 @@ class DotsAndBoxesApp {
     });
 
     // Waiting screen
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      window.soundManager.playClick();
+      this.startGame();
+    });
+
     document.getElementById('copyRoomCodeBtn').addEventListener('click', () => {
       window.soundManager.playClick();
       this.copyRoomCode();
@@ -156,18 +161,10 @@ class DotsAndBoxesApp {
     });
 
     // Avatar selection
-    this.setupAvatarSelection('hostAvatarOptions', 'hostNameInput');
-    this.setupAvatarSelection('guestAvatarOptions', 'guestNameInput');
+    this.setupAvatarSelection('hostAvatarSelector');
+    this.setupAvatarSelection('guestAvatarSelector');
 
-    // Player count selection
-    document.querySelectorAll('.player-count-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        window.soundManager.playClick();
-        document.querySelectorAll('.player-count-btn').forEach(b => b.classList.remove('selected'));
-        e.target.classList.add('selected');
-        this.maxPlayers = parseInt(e.target.dataset.count);
-      });
-    });
+    // Remove player count selection logic (not needed anymore)
 
     // Hover sounds for buttons
     document.querySelectorAll('.btn').forEach(btn => {
@@ -179,7 +176,6 @@ class DotsAndBoxesApp {
 
   setupAvatarSelection(containerId, inputId) {
     const container = document.getElementById(containerId);
-    const input = document.getElementById(inputId);
     
     if (!container) {
       console.warn(`Avatar container ${containerId} not found`);
@@ -191,12 +187,11 @@ class DotsAndBoxesApp {
         window.soundManager.playClick();
         container.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
         avatar.classList.add('selected');
-        this.playerAvatar = avatar.textContent;
+        this.playerAvatar = avatar.getAttribute('data-avatar') || avatar.textContent;
         
         // Store selection
-        if (inputId === 'hostNameInput') {
-          localStorage.setItem('playerAvatar', this.playerAvatar);
-        }
+        localStorage.setItem('playerAvatar', this.playerAvatar);
+        console.log('Avatar selected:', this.playerAvatar);
       });
     });
   }
@@ -235,7 +230,7 @@ class DotsAndBoxesApp {
         id: null, // Will be set by Firebase
         code: code,
         hostId: this.playerId,
-        maxPlayers: this.maxPlayers,
+        maxPlayers: 4, // Fixed maximum of 4 players
         currentPlayers: 1,
         status: 'waiting',
         createdAt: Date.now(),
@@ -394,11 +389,16 @@ class DotsAndBoxesApp {
     if (roomData.status === 'waiting') {
       this.updatePlayerSlots();
       
-      // Start game if room is full
-      if (roomData.currentPlayers >= roomData.maxPlayers && this.players.length >= roomData.maxPlayers) {
-        if (roomData.players[this.playerId]?.isHost) {
-          // Only host starts the game
-          this.startGame();
+      // Show/hide start button for host
+      const startBtn = document.getElementById('startGameBtn');
+      if (startBtn) {
+        const isHost = roomData.players[this.playerId]?.isHost;
+        const hasMinPlayers = this.players.length >= 2;
+        
+        if (isHost && hasMinPlayers) {
+          startBtn.style.display = 'block';
+        } else {
+          startBtn.style.display = 'none';
         }
       }
     } else if (roomData.status === 'playing') {
@@ -412,8 +412,7 @@ class DotsAndBoxesApp {
       
       // Render game
       if (this.canvas) {
-        this.canvas.updateGameState(this.gameState, this.players);
-        this.canvas.render();
+        this.canvas.drawBoard(this.gameState);
       }
       
       // Update player cards
@@ -445,10 +444,16 @@ class DotsAndBoxesApp {
   showGameScreen() {
     this.showScreen('gameScreen');
     
-    // Initialize canvas
-    this.canvas = new GameCanvas('gameCanvas', this.gameState, this.players);
-    this.canvas.setMoveCallback((line) => this.makeMove(line));
-    this.canvas.render();
+    // Initialize canvas with correct parameters
+    const gridRows = 11; // 11 rows of dots
+    const gridCols = 6;  // 6 columns of dots
+    
+    this.canvas = new GameCanvas('gameCanvas', gridRows, gridCols, (line) => this.makeMove(line));
+    
+    // Draw the game board
+    if (this.gameState) {
+      this.canvas.drawBoard(this.gameState);
+    }
     
     // Create player cards
     this.createPlayerCards();
