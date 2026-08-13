@@ -16,54 +16,47 @@
 <body>
   <!-- Main Container -->
   <div id="app">
-    <!-- Header -->
-    <header class="header">
-      <h1>🎮 Dots and Boxes</h1>
-      <div class="connection-status" id="connectionStatus">
-        <span class="status-indicator"></span>
-        <span class="status-text">Firebase Ready</span>
-      </div>
-    </header>
-
     <!-- Splash Screen -->
     <div id="splashScreen" class="screen active">
+      <div class="splash-background">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+      </div>
+      
       <div class="splash-container">
         <div class="game-logo">
-          <div class="logo-icon">
-            <div class="logo-dots">
-              <span class="dot"></span>
-              <span class="dot"></span>
-              <span class="dot"></span>
-              <span class="dot"></span>
-            </div>
-            <div class="logo-lines">
-              <span class="line line-h"></span>
-              <span class="line line-v"></span>
-            </div>
-          </div>
-          <h1 class="game-title">Dots & Boxes</h1>
+          <h1 class="game-title-3d">
+            <span class="title-layer">Dots & Boxes</span>
+            <span class="title-layer">Dots & Boxes</span>
+            <span class="title-layer">Dots & Boxes</span>
+            <span class="title-layer">Dots & Boxes</span>
+          </h1>
           <p class="game-tagline">Connect. Complete. Conquer.</p>
         </div>
 
         <div class="splash-actions">
-          <button id="createRoomBtn" class="btn btn-primary btn-splash">
+          <button id="createRoomBtn" class="btn-game btn-create">
             <span class="btn-icon">🏠</span>
             <span class="btn-text">Create Room</span>
+            <div class="btn-shine"></div>
           </button>
           
-          <button id="joinRoomBtn" class="btn btn-secondary btn-splash">
+          <button id="joinRoomBtn" class="btn-game btn-join">
             <span class="btn-icon">🚪</span>
             <span class="btn-text">Join Room</span>
+            <div class="btn-shine"></div>
           </button>
           
-          <button id="howToPlayBtn" class="btn btn-info btn-splash">
+          <button id="howToPlayBtn" class="btn-game btn-help">
             <span class="btn-icon">❓</span>
             <span class="btn-text">How to Play</span>
+            <div class="btn-shine"></div>
           </button>
         </div>
 
         <div class="splash-footer">
-          <p>Play with 2-4 friends in real-time!</p>
+          <p>🎮 Play with 2-4 friends in real-time!</p>
         </div>
       </div>
     </div>
@@ -151,47 +144,45 @@
       </div>
     </div>
 
-    <!-- How to Play Screen -->
-    <div id="howToPlayScreen" class="screen">
-      <div class="howto-container">
-        <h2>❓ How to Play</h2>
-        
-        <div class="howto-content">
-          <div class="howto-section">
-            <h3>🎯 Objective</h3>
-            <p>Complete more boxes than your opponents to win the game!</p>
-          </div>
-
-          <div class="howto-section">
-            <h3>🎮 Gameplay</h3>
-            <ol>
-              <li><strong>Take Turns:</strong> Players take turns drawing lines between adjacent dots</li>
-              <li><strong>Complete Boxes:</strong> When you draw the 4th side of a box, you claim it and get another turn</li>
-              <li><strong>Keep Playing:</strong> Continue until all boxes are completed</li>
-              <li><strong>Win:</strong> The player with the most boxes wins!</li>
-            </ol>
-          </div>
-
-          <div class="howto-section">
-            <h3>🎨 Grid Layout</h3>
-            <p>The game uses an 11×6 grid of dots, creating 50 boxes to compete for. Each box you complete adds to your score!</p>
-          </div>
-
-          <div class="howto-section">
-            <h3>👥 Players</h3>
-            <p>Play with 2-4 players. The active player's card will glow green with a "TURN" badge.</p>
-          </div>
-
-          <div class="howto-section">
-            <h3>💡 Strategy Tip</h3>
-            <p>Try to avoid giving your opponent the chance to complete boxes. Sometimes it's better to draw lines that don't complete boxes!</p>
-          </div>
+    <!-- How to Play Modal -->
+    <div id="howToPlayModal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h3>❓ How to Play</h3>
+          <button id="closeHowToPlay" class="modal-close">✕</button>
         </div>
+        <div class="modal-body modal-scrollable">
+          <div class="howto-content">
+            <div class="howto-section">
+              <h3>🎯 Objective</h3>
+              <p>Complete more boxes than your opponents to win the game!</p>
+            </div>
 
-        <div class="howto-actions">
-          <button id="howToPlayBackBtn" class="btn btn-primary btn-large">
-            Got it!
-          </button>
+            <div class="howto-section">
+              <h3>🎮 Gameplay</h3>
+              <ol>
+                <li><strong>Take Turns:</strong> Players take turns drawing lines between adjacent dots</li>
+                <li><strong>Complete Boxes:</strong> When you draw the 4th side of a box, you claim it and get another turn</li>
+                <li><strong>Keep Playing:</strong> Continue until all boxes are completed</li>
+                <li><strong>Win:</strong> The player with the most boxes wins!</li>
+              </ol>
+            </div>
+
+            <div class="howto-section">
+              <h3>🎨 Grid Layout</h3>
+              <p>The game uses an 11×6 grid of dots, creating 50 boxes to compete for. Each box you complete adds to your score!</p>
+            </div>
+
+            <div class="howto-section">
+              <h3>👥 Players</h3>
+              <p>Play with 2-4 players. The active player's card will glow green with a "TURN" badge.</p>
+            </div>
+
+            <div class="howto-section">
+              <h3>💡 Strategy Tip</h3>
+              <p>Try to avoid giving your opponent the chance to complete boxes. Sometimes it's better to draw lines that don't complete boxes!</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -266,8 +257,8 @@
       </div>
 
       <!-- Game Controls -->
-      <div class="game-controls">
-        <button id="leaveGameBtn" class="btn btn-secondary">Leave Game</button>
+      <div class="game-controls" style="display: none;">
+        <!-- Controls removed - cleaner game screen -->
       </div>
     </div>
 
@@ -290,19 +281,96 @@
 
     <!-- Toast Notifications -->
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Update Available Toast -->
+    <div id="updateToast" class="update-toast">
+      <div class="update-content">
+        <div class="update-icon">🔄</div>
+        <div class="update-message">
+          <h4 id="updateTitle">Update Available!</h4>
+          <p id="updateSubtitle">A new version is ready to install</p>
+        </div>
+      </div>
+      <div class="update-actions" id="updateActions">
+        <button id="updateNowBtn" class="btn-update btn-update-now">Update Now</button>
+        <button id="updateLaterBtn" class="btn-update btn-update-later">Later</button>
+      </div>
+      <div class="update-loading" id="updateLoading">
+        <div class="spinner"></div>
+        <p>Updating to latest version...</p>
+      </div>
+    </div>
   </div>
 
   <!-- Main App Module (Vite) -->
   <script type="module" src="/js/main.js"></script>
   
-  <!-- Service Worker Registration -->
+  <!-- Service Worker Registration with Update Detection -->
   <script>
+    let newWorker;
+    
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then(registration => console.log('SW registered:', registration))
+          .then(registration => {
+            console.log('SW registered:', registration);
+            
+            // Check for updates every 60 seconds
+            setInterval(() => {
+              registration.update();
+            }, 60000);
+            
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+              newWorker = registration.installing;
+              
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker is installed and waiting
+                  showUpdateToast();
+                }
+              });
+            });
+          })
           .catch(err => console.log('SW registration failed:', err));
+        
+        // Handle controller change (when new SW takes over)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
       });
+    }
+    
+    function showUpdateToast() {
+      const updateToast = document.getElementById('updateToast');
+      const updateNowBtn = document.getElementById('updateNowBtn');
+      const updateLaterBtn = document.getElementById('updateLaterBtn');
+      
+      updateToast.classList.add('show');
+      
+      updateNowBtn.onclick = () => {
+        // Show updating state
+        updateToast.classList.add('updating');
+        
+        // Update text
+        document.getElementById('updateTitle').textContent = 'Updating...';
+        document.getElementById('updateSubtitle').textContent = 'Please wait';
+        
+        // Send skip waiting message
+        if (newWorker) {
+          newWorker.postMessage({ type: 'SKIP_WAITING' });
+        }
+        
+        // Reload will happen automatically via controllerchange event
+        // But add a fallback timeout just in case
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      };
+      
+      updateLaterBtn.onclick = () => {
+        updateToast.classList.remove('show');
+      };
     }
   </script>
 </body>

@@ -1,5 +1,5 @@
 // Service Worker for Dots and Boxes PWA
-const CACHE_NAME = 'dots-and-boxes-v1.1.0';
+const CACHE_NAME = 'dots-and-boxes-v2.0.0';
 const OFFLINE_PAGE = '/offline.html';
 
 // Assets to cache immediately on install
@@ -7,6 +7,7 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/css/styles.css',
+  '/js/main.js',
   '/js/app-firebase.js',
   '/js/firebase-config.js',
   '/js/canvas.js',

@@ -80,7 +80,7 @@ class DotsAndBoxesApp {
 
     document.getElementById('howToPlayBtn').addEventListener('click', () => {
       soundManager.playClick();
-      this.showScreen('howtoScreen');
+      this.showHowToPlayModal();
     });
 
     // Create room screen
@@ -106,9 +106,15 @@ class DotsAndBoxesApp {
     });
 
     // How to play screen
-    document.getElementById('howToPlayBackBtn').addEventListener('click', () => {
+    document.getElementById('closeHowToPlay').addEventListener('click', () => {
       soundManager.playClick();
-      this.showScreen('splashScreen');
+      this.closeHowToPlayModal();
+    });
+
+    document.getElementById('howToPlayModal').addEventListener('click', (e) => {
+      if (e.target.id === 'howToPlayModal') {
+        this.closeHowToPlayModal();
+      }
     });
 
     // Waiting screen
@@ -149,10 +155,7 @@ class DotsAndBoxesApp {
     });
 
     // Game screen
-    document.getElementById('leaveGameBtn').addEventListener('click', () => {
-      soundManager.playClick();
-      this.leaveGame();
-    });
+    // Leave button removed for cleaner UI
 
     // Game over screen
     document.getElementById('rematchBtn').addEventListener('click', () => {
@@ -947,6 +950,16 @@ class DotsAndBoxesApp {
 
   closeQRModal() {
     const modal = document.getElementById('qrModal');
+    modal.classList.remove('active');
+  }
+
+  showHowToPlayModal() {
+    const modal = document.getElementById('howToPlayModal');
+    modal.classList.add('active');
+  }
+
+  closeHowToPlayModal() {
+    const modal = document.getElementById('howToPlayModal');
     modal.classList.remove('active');
   }
 
