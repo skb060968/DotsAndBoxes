@@ -34,11 +34,6 @@ function getDbRef(path = '') {
   return ref(database, path);
 }
 
-// Helper function to get database reference
-function getDbRef(path = '') {
-  return ref(database, path);
-}
-
 // Firebase Database Helper Functions
 export const FirebaseDB = {
   // Initialize
