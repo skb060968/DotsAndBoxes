@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#2c3e50">
+  <meta name="theme-color" content="#667eea">
   <meta name="description" content="Play Dots and Boxes - A classic multiplayer game">
   
   <!-- PWA Meta Tags -->
@@ -14,9 +14,12 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <!-- Main Container -->
+  <!-- Main App Container -->
   <div id="app">
-    <!-- Splash Screen -->
+    
+    <!-- ============================================
+         SPLASH SCREEN
+         ============================================ -->
     <div id="splashScreen" class="screen active">
       <div class="splash-background">
         <div class="gradient-orb orb-1"></div>
@@ -61,7 +64,9 @@
       </div>
     </div>
 
-    <!-- Create Room Screen -->
+    <!-- ============================================
+         CREATE ROOM SCREEN
+         ============================================ -->
     <div id="createRoomScreen" class="screen">
       <div class="room-container">
         <h2>🏠 Create Room</h2>
@@ -100,7 +105,9 @@
       </div>
     </div>
 
-    <!-- Join Room Screen -->
+    <!-- ============================================
+         JOIN ROOM SCREEN
+         ============================================ -->
     <div id="joinRoomScreen" class="screen">
       <div class="room-container">
         <h2>🚪 Join Room</h2>
@@ -144,50 +151,9 @@
       </div>
     </div>
 
-    <!-- How to Play Modal -->
-    <div id="howToPlayModal" class="modal">
-      <div class="modal-content modal-large">
-        <div class="modal-header">
-          <h3>❓ How to Play</h3>
-          <button id="closeHowToPlay" class="modal-close">✕</button>
-        </div>
-        <div class="modal-body modal-scrollable">
-          <div class="howto-content">
-            <div class="howto-section">
-              <h3>🎯 Objective</h3>
-              <p>Complete more boxes than your opponents to win the game!</p>
-            </div>
-
-            <div class="howto-section">
-              <h3>🎮 Gameplay</h3>
-              <ol>
-                <li><strong>Take Turns:</strong> Players take turns drawing lines between adjacent dots</li>
-                <li><strong>Complete Boxes:</strong> When you draw the 4th side of a box, you claim it and get another turn</li>
-                <li><strong>Keep Playing:</strong> Continue until all boxes are completed</li>
-                <li><strong>Win:</strong> The player with the most boxes wins!</li>
-              </ol>
-            </div>
-
-            <div class="howto-section">
-              <h3>🎨 Grid Layout</h3>
-              <p>The game uses an 11×6 grid of dots, creating 50 boxes to compete for. Each box you complete adds to your score!</p>
-            </div>
-
-            <div class="howto-section">
-              <h3>👥 Players</h3>
-              <p>Play with 2-4 players. The active player's card will glow green with a "TURN" badge.</p>
-            </div>
-
-            <div class="howto-section">
-              <h3>💡 Strategy Tip</h3>
-              <p>Try to avoid giving your opponent the chance to complete boxes. Sometimes it's better to draw lines that don't complete boxes!</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Waiting Screen -->
+    <!-- ============================================
+         WAITING SCREEN
+         ============================================ -->
     <div id="waitingScreen" class="screen">
       <div class="waiting-container">
         <div class="room-info-card">
@@ -226,24 +192,9 @@
       </div>
     </div>
 
-    <!-- QR Code Modal -->
-    <div id="qrModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>📱 Scan to Join</h3>
-          <button id="closeQRModal" class="modal-close">✕</button>
-        </div>
-        <div class="modal-body">
-          <div id="qrCodeContainer" class="qr-code-container"></div>
-          <div class="qr-info">
-            <p class="qr-room-code">Room Code: <strong id="qrRoomCode"></strong></p>
-            <p class="qr-instruction">Scan this QR code with your phone to join the game</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Game Screen -->
+    <!-- ============================================
+         GAME SCREEN
+         ============================================ -->
     <div id="gameScreen" class="screen">
       <!-- Player Cards Container -->
       <div class="players-container" id="playersContainer">
@@ -255,14 +206,11 @@
         <canvas id="gameCanvas"></canvas>
         <div class="turn-message" id="turnMessage">Your Turn!</div>
       </div>
-
-      <!-- Game Controls -->
-      <div class="game-controls" style="display: none;">
-        <!-- Controls removed - cleaner game screen -->
-      </div>
     </div>
 
-    <!-- Game Over Screen -->
+    <!-- ============================================
+         GAME OVER SCREEN
+         ============================================ -->
     <div id="gameOverScreen" class="screen">
       <div class="game-over-container">
         <h2 id="gameOverTitle">Game Over!</h2>
@@ -279,29 +227,102 @@
       </div>
     </div>
 
-    <!-- Toast Notifications -->
-    <div id="toastContainer" class="toast-container"></div>
+  </div>
 
-    <!-- Update Available Toast -->
-    <div id="updateToast" class="update-toast">
-      <div class="update-content">
-        <div class="update-icon">🔄</div>
-        <div class="update-message">
-          <h4 id="updateTitle">Update Available!</h4>
-          <p id="updateSubtitle">A new version is ready to install</p>
+  <!-- ============================================
+       MODALS
+       ============================================ -->
+  
+  <!-- How to Play Modal -->
+  <div id="howToPlayModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3>❓ How to Play</h3>
+        <button id="closeHowToPlay" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body modal-scrollable">
+        <div class="howto-content">
+          <div class="howto-section">
+            <h3>🎯 Objective</h3>
+            <p>Complete more boxes than your opponents to win the game!</p>
+          </div>
+
+          <div class="howto-section">
+            <h3>🎮 Gameplay</h3>
+            <ol>
+              <li><strong>Take Turns:</strong> Players take turns drawing lines between adjacent dots</li>
+              <li><strong>Complete Boxes:</strong> When you draw the 4th side of a box, you claim it and get another turn</li>
+              <li><strong>Keep Playing:</strong> Continue until all boxes are completed</li>
+              <li><strong>Win:</strong> The player with the most boxes wins!</li>
+            </ol>
+          </div>
+
+          <div class="howto-section">
+            <h3>🎨 Grid Layout</h3>
+            <p>The game uses an 11×6 grid of dots, creating 50 boxes to compete for. Each box you complete adds to your score!</p>
+          </div>
+
+          <div class="howto-section">
+            <h3>👥 Players</h3>
+            <p>Play with 2-4 players. The active player's card will glow green with a "TURN" badge.</p>
+          </div>
+
+          <div class="howto-section">
+            <h3>💡 Strategy Tip</h3>
+            <p>Try to avoid giving your opponent the chance to complete boxes. Sometimes it's better to draw lines that don't complete boxes!</p>
+          </div>
         </div>
-      </div>
-      <div class="update-actions" id="updateActions">
-        <button id="updateNowBtn" class="btn-update btn-update-now">Update Now</button>
-        <button id="updateLaterBtn" class="btn-update btn-update-later">Later</button>
-      </div>
-      <div class="update-loading" id="updateLoading">
-        <div class="spinner"></div>
-        <p>Updating to latest version...</p>
       </div>
     </div>
   </div>
 
+  <!-- QR Code Modal -->
+  <div id="qrModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📱 Scan to Join</h3>
+        <button id="closeQRModal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="qrCodeContainer" class="qr-code-container"></div>
+        <div class="qr-info">
+          <p class="qr-room-code">Room Code: <strong id="qrRoomCode"></strong></p>
+          <p class="qr-instruction">Scan this QR code with your phone to join the game</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       NOTIFICATIONS
+       ============================================ -->
+  
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Update Available Toast -->
+  <div id="updateToast" class="update-toast">
+    <div class="update-content">
+      <div class="update-icon">🔄</div>
+      <div class="update-message">
+        <h4 id="updateTitle">Update Available!</h4>
+        <p id="updateSubtitle">A new version is ready to install</p>
+      </div>
+    </div>
+    <div class="update-actions" id="updateActions">
+      <button id="updateNowBtn" class="btn-update btn-update-now">Update Now</button>
+      <button id="updateLaterBtn" class="btn-update btn-update-later">Later</button>
+    </div>
+    <div class="update-loading" id="updateLoading">
+      <div class="spinner"></div>
+      <p>Updating to latest version...</p>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  
   <!-- Main App Module (Vite) -->
   <script type="module" src="/js/main.js"></script>
   
