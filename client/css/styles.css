@@ -52,6 +52,37 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  position: relative;
+}
+
+.screen::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.6) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float-orb 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.screen::after {
+  content: '';
+  position: absolute;
+  bottom: -150px;
+  right: -150px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(240, 147, 251, 0.6) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float-orb 20s ease-in-out infinite;
+  animation-delay: 5s;
+  pointer-events: none;
 }
 
 .screen.active {
@@ -558,7 +589,218 @@ body {
 }
 
 /* ============================================
-   ROOM SCREENS (Create & Join)
+   CREATE & JOIN ROOM SCREENS - NEW DESIGN
+   ============================================ */
+
+.screen-container {
+  width: 100%;
+  max-width: 500px;
+  animation: fadeInUp 0.6s ease-out;
+  position: relative;
+  z-index: 1;
+}
+
+.screen-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.screen-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.screen-subtitle {
+  font-size: 16px;
+  color: #7f8c8d;
+  margin: 0;
+  font-weight: 500;
+}
+
+.form-card {
+  background: white;
+  border-radius: 20px;
+  padding: 35px 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group:last-of-type {
+  margin-bottom: 30px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e8ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  color: var(--text-dark);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.form-input::placeholder {
+  color: #bdc3c7;
+  font-weight: 400;
+}
+
+.form-input-code {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+  padding: 18px;
+}
+
+/* Avatar Grid - Smaller Size */
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.avatar-item {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  background: #f8f9fa;
+  border: 2px solid #e8ecef;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+
+.avatar-item:hover {
+  transform: scale(1.1);
+  background: white;
+  border-color: #d0d5dd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-item.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.avatar-item.selected::after {
+  content: '✓';
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--secondary-color);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* Form Buttons */
+.btn-form {
+  padding: 16px 32px;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.btn-form:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-form:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-form-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-form-primary:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.btn-form-secondary {
+  background: #f8f9fa;
+  color: var(--text-dark);
+  border: 2px solid #e8ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn-form-secondary:hover {
+  background: #e9ecef;
+  border-color: #d0d5dd;
+}
+
+/* ============================================
+   OLD ROOM SCREENS (REMOVE LATER)
    ============================================ */
 
 .room-container {
@@ -786,6 +1028,8 @@ body {
   max-width: 600px;
   width: 100%;
   padding: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .waiting-actions {
@@ -1390,6 +1634,8 @@ body {
   padding: 40px;
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .game-over-actions {
@@ -1762,6 +2008,47 @@ body {
   }
 
   /* Room screens mobile */
+  .screen-container {
+    padding: 20px;
+  }
+
+  .screen-title {
+    font-size: 28px;
+  }
+
+  .screen-subtitle {
+    font-size: 14px;
+  }
+
+  .form-card {
+    padding: 25px 20px;
+  }
+
+  .form-input {
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  .form-input-code {
+    font-size: 24px;
+    letter-spacing: 6px;
+    padding: 16px;
+  }
+
+  .avatar-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .avatar-item {
+    font-size: 36px;
+  }
+
+  .btn-form {
+    padding: 14px 28px;
+    font-size: 16px;
+  }
+
   .room-container {
     padding: 30px 20px;
   }
@@ -1864,6 +2151,30 @@ body {
   }
 
   /* Avatar selector small mobile */
+  .avatar-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .avatar-item {
+    font-size: 32px;
+    border-radius: 12px;
+  }
+
+  .screen-title {
+    font-size: 24px;
+  }
+
+  .form-input-code {
+    font-size: 22px;
+    letter-spacing: 4px;
+  }
+
+  .btn-form {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
   .avatar-selector {
     grid-template-columns: repeat(3, 1fr);
   }

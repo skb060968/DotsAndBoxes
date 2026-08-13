@@ -68,39 +68,38 @@
          CREATE ROOM SCREEN
          ============================================ -->
     <div id="createRoomScreen" class="screen">
-      <div class="room-container">
-        <h2>🏠 Create Room</h2>
-        
-        <div class="form-group">
-          <label for="hostNameInput">Your Name</label>
-          <input type="text" id="hostNameInput" class="form-input" maxlength="20" placeholder="Enter your name" value="">
+      <div class="screen-container">
+        <div class="screen-header">
+          <h2 class="screen-title">🏠 Create Room</h2>
+          <p class="screen-subtitle">Set up your game room</p>
         </div>
 
-        <div class="form-group">
-          <label>Choose Your Avatar</label>
-          <div class="avatar-selector" id="hostAvatarSelector">
-            <div class="avatar-option selected" data-avatar="😀">😀</div>
-            <div class="avatar-option" data-avatar="😎">😎</div>
-            <div class="avatar-option" data-avatar="🤓">🤓</div>
-            <div class="avatar-option" data-avatar="😺">😺</div>
-            <div class="avatar-option" data-avatar="🐶">🐶</div>
-            <div class="avatar-option" data-avatar="🐼">🐼</div>
-            <div class="avatar-option" data-avatar="🦊">🦊</div>
-            <div class="avatar-option" data-avatar="🐸">🐸</div>
-            <div class="avatar-option" data-avatar="🦁">🦁</div>
-            <div class="avatar-option" data-avatar="🐯">🐯</div>
-            <div class="avatar-option" data-avatar="🦄">🦄</div>
-            <div class="avatar-option" data-avatar="🤖">🤖</div>
+        <div class="form-card">
+          <div class="form-group">
+            <label for="hostNameInput">Your Name</label>
+            <input type="text" id="hostNameInput" class="form-input" maxlength="20" placeholder="Enter your name" autocomplete="off">
           </div>
-        </div>
 
-        <div class="room-actions">
-          <button id="createRoomConfirmBtn" class="btn btn-primary btn-large">
-            Create Room
-          </button>
-          <button id="createRoomBackBtn" class="btn btn-secondary">
-            Back
-          </button>
+          <div class="form-group">
+            <label>Choose Your Avatar</label>
+            <div class="avatar-grid" id="hostAvatarSelector">
+              <div class="avatar-item selected" data-avatar="😀">😀</div>
+              <div class="avatar-item" data-avatar="😎">😎</div>
+              <div class="avatar-item" data-avatar="🤓">🤓</div>
+              <div class="avatar-item" data-avatar="😺">😺</div>
+              <div class="avatar-item" data-avatar="🐶">🐶</div>
+              <div class="avatar-item" data-avatar="🤖">🤖</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="createRoomConfirmBtn" class="btn-form btn-form-primary">
+              <span>Create Room</span>
+            </button>
+            <button id="createRoomBackBtn" class="btn-form btn-form-secondary">
+              <span>Back</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -109,44 +108,43 @@
          JOIN ROOM SCREEN
          ============================================ -->
     <div id="joinRoomScreen" class="screen">
-      <div class="room-container">
-        <h2>🚪 Join Room</h2>
-        
-        <div class="form-group">
-          <label for="guestNameInput">Your Name</label>
-          <input type="text" id="guestNameInput" class="form-input" maxlength="20" placeholder="Enter your name" value="">
+      <div class="screen-container">
+        <div class="screen-header">
+          <h2 class="screen-title">🚪 Join Room</h2>
+          <p class="screen-subtitle">Enter room code to join</p>
         </div>
 
-        <div class="form-group">
-          <label for="roomCodeInput">Room Code</label>
-          <input type="text" id="roomCodeInput" class="form-input room-code-input" maxlength="4" placeholder="ABCD">
-        </div>
-
-        <div class="form-group">
-          <label>Choose Your Avatar</label>
-          <div class="avatar-selector" id="guestAvatarSelector">
-            <div class="avatar-option selected" data-avatar="😀">😀</div>
-            <div class="avatar-option" data-avatar="😎">😎</div>
-            <div class="avatar-option" data-avatar="🤓">🤓</div>
-            <div class="avatar-option" data-avatar="😺">😺</div>
-            <div class="avatar-option" data-avatar="🐶">🐶</div>
-            <div class="avatar-option" data-avatar="🐼">🐼</div>
-            <div class="avatar-option" data-avatar="🦊">🦊</div>
-            <div class="avatar-option" data-avatar="🐸">🐸</div>
-            <div class="avatar-option" data-avatar="🦁">🦁</div>
-            <div class="avatar-option" data-avatar="🐯">🐯</div>
-            <div class="avatar-option" data-avatar="🦄">🦄</div>
-            <div class="avatar-option" data-avatar="🤖">🤖</div>
+        <div class="form-card">
+          <div class="form-group">
+            <label for="guestNameInput">Your Name</label>
+            <input type="text" id="guestNameInput" class="form-input" maxlength="20" placeholder="Enter your name" autocomplete="off">
           </div>
-        </div>
 
-        <div class="room-actions">
-          <button id="joinRoomConfirmBtn" class="btn btn-primary btn-large">
-            Join Room
-          </button>
-          <button id="joinRoomBackBtn" class="btn btn-secondary">
-            Back
-          </button>
+          <div class="form-group">
+            <label for="roomCodeInput">Room Code</label>
+            <input type="text" id="roomCodeInput" class="form-input form-input-code" maxlength="4" placeholder="ABCD" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label>Choose Your Avatar</label>
+            <div class="avatar-grid" id="guestAvatarSelector">
+              <div class="avatar-item selected" data-avatar="😀">😀</div>
+              <div class="avatar-item" data-avatar="😎">😎</div>
+              <div class="avatar-item" data-avatar="🤓">🤓</div>
+              <div class="avatar-item" data-avatar="😺">😺</div>
+              <div class="avatar-item" data-avatar="🐶">🐶</div>
+              <div class="avatar-item" data-avatar="🤖">🤖</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="joinRoomConfirmBtn" class="btn-form btn-form-primary">
+              <span>Join Room</span>
+            </button>
+            <button id="joinRoomBackBtn" class="btn-form btn-form-secondary">
+              <span>Back</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

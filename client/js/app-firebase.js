@@ -32,6 +32,7 @@ class DotsAndBoxesApp {
     this.setupEventListeners();
     this.loadPlayerData();
     this.generatePlayerId();
+    this.registerServiceWorker();
     
     // Initialize sound on first user interaction
     document.addEventListener('click', () => {
@@ -190,10 +191,10 @@ class DotsAndBoxesApp {
       return;
     }
     
-    container.querySelectorAll('.avatar-option').forEach(avatar => {
+    container.querySelectorAll('.avatar-item').forEach(avatar => {
       avatar.addEventListener('click', () => {
         soundManager.playClick();
-        container.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+        container.querySelectorAll('.avatar-item').forEach(a => a.classList.remove('selected'));
         avatar.classList.add('selected');
         this.playerAvatar = avatar.getAttribute('data-avatar') || avatar.textContent;
         
@@ -1002,7 +1003,7 @@ class DotsAndBoxesApp {
     if (savedAvatar) {
       this.playerAvatar = savedAvatar;
       // Select the avatar in UI
-      document.querySelectorAll('.avatar-option').forEach(option => {
+      document.querySelectorAll('.avatar-item').forEach(option => {
         if (option.textContent === savedAvatar) {
           option.classList.add('selected');
         }
@@ -1017,6 +1018,71 @@ class DotsAndBoxesApp {
   savePlayerData() {
     localStorage.setItem('playerName', this.playerName);
     localStorage.setItem('playerAvatar', this.playerAvatar);
+  }
+
+  registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('[App] Service Worker registered:', registration);
+
+          // Check for updates every 60 seconds
+          setInterval(() => {
+            registration.update();
+          }, 60000);
+
+          // Listen for new service worker waiting to activate
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New service worker is waiting to activate
+                this.showUpdateToast(registration);
+              }
+            });
+          });
+
+          // Handle immediate controller change (update already waiting)
+          if (registration.waiting) {
+            this.showUpdateToast(registration);
+          }
+        })
+        .catch((error) => {
+          console.error('[App] Service Worker registration failed:', error);
+        });
+
+      // Handle controller change (after skipWaiting)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+  }
+
+  showUpdateToast(registration) {
+    const toast = document.getElementById('updateToast');
+    const updateNowBtn = document.getElementById('updateNowBtn');
+    const updateLaterBtn = document.getElementById('updateLaterBtn');
+    const updateActions = document.getElementById('updateActions');
+    const updateLoading = document.getElementById('updateLoading');
+
+    toast.classList.add('show');
+
+    updateNowBtn.onclick = () => {
+      // Show loading state
+      updateActions.style.display = 'none';
+      updateLoading.style.display = 'flex';
+      document.querySelector('#updateToast .update-message').textContent = 'Updating to latest version...';
+
+      // Tell the waiting service worker to skip waiting
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    };
+
+    updateLaterBtn.onclick = () => {
+      toast.classList.remove('show');
+    };
   }
 }
 
