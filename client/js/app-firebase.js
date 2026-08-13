@@ -156,7 +156,10 @@ class DotsAndBoxesApp {
     });
 
     // Game screen
-    // Leave button removed for cleaner UI
+    document.getElementById('leaveGameBtn').addEventListener('click', () => {
+      soundManager.playClick();
+      this.leaveGame();
+    });
 
     // Game over screen
     document.getElementById('rematchBtn').addEventListener('click', () => {
@@ -774,27 +777,19 @@ class DotsAndBoxesApp {
     const container = document.getElementById('playerSlots');
     container.innerHTML = '';
     
-    for (let i = 0; i < this.maxPlayers; i++) {
-      const player = this.players[i];
+    // Only show players who have actually joined
+    this.players.forEach(player => {
       const slot = document.createElement('div');
-      slot.className = 'player-slot';
+      slot.className = 'player-slot filled';
       
-      if (player) {
-        slot.classList.add('filled');
-        slot.innerHTML = `
-          <div class="player-slot-avatar">${player.avatar}</div>
-          <div class="player-slot-name">${player.name}</div>
-          ${player.isHost ? '<div class="host-badge">👑 Host</div>' : ''}
-        `;
-      } else {
-        slot.innerHTML = `
-          <div class="player-slot-avatar">👤</div>
-          <div class="player-slot-name">Waiting...</div>
-        `;
-      }
+      slot.innerHTML = `
+        <div class="player-slot-avatar">${player.avatar}</div>
+        <div class="player-slot-name">${player.name}</div>
+        ${player.isHost ? '<div class="host-badge">👑 Host</div>' : ''}
+      `;
       
       container.appendChild(slot);
-    }
+    });
   }
 
   createPlayerCards() {
@@ -811,7 +806,7 @@ class DotsAndBoxesApp {
         <div class="player-avatar">${player.avatar}</div>
         <div class="player-info">
           <div class="player-name">${player.name}</div>
-          <div class="player-score">Score: <span id="score-${player.playerNumber}">0</span></div>
+          <div class="player-score"><span id="score-${player.playerNumber}">0</span> boxes</div>
         </div>
       `;
       

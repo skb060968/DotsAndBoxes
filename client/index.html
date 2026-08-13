@@ -194,15 +194,22 @@
          GAME SCREEN
          ============================================ -->
     <div id="gameScreen" class="screen">
-      <!-- Player Cards Container -->
-      <div class="players-container" id="playersContainer">
-        <!-- Player cards will be dynamically added here -->
-      </div>
+      <div class="game-screen-layout">
+        <!-- Player Cards Container -->
+        <div class="players-container" id="playersContainer">
+          <!-- Player cards will be dynamically added here -->
+        </div>
 
-      <!-- Game Canvas Container -->
-      <div class="canvas-container">
-        <canvas id="gameCanvas"></canvas>
-        <div class="turn-message" id="turnMessage">Your Turn!</div>
+        <!-- Game Canvas Container -->
+        <div class="canvas-container">
+          <canvas id="gameCanvas"></canvas>
+          <div class="turn-message" id="turnMessage">Your Turn!</div>
+        </div>
+
+        <!-- Game Actions -->
+        <div class="game-actions">
+          <button id="leaveGameBtn" class="btn btn-leave">Leave Game</button>
+        </div>
       </div>
     </div>
 
