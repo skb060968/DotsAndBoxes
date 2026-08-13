@@ -156,10 +156,13 @@ class DotsAndBoxesApp {
     });
 
     // Game screen
-    document.getElementById('leaveGameBtn').addEventListener('click', () => {
-      soundManager.playClick();
-      this.leaveGame();
-    });
+    const leaveGameBtn = document.getElementById('leaveGameBtn');
+    if (leaveGameBtn) {
+      leaveGameBtn.addEventListener('click', () => {
+        soundManager.playClick();
+        this.leaveGame();
+      });
+    }
 
     // Game over screen
     document.getElementById('rematchBtn').addEventListener('click', () => {
@@ -469,6 +472,9 @@ class DotsAndBoxesApp {
     
     // Create player cards
     this.createPlayerCards();
+    
+    // Update player cards to highlight active player
+    this.updatePlayerCards();
     
     soundManager.playWin();
   }
@@ -1061,13 +1067,23 @@ class DotsAndBoxesApp {
     const updateActions = document.getElementById('updateActions');
     const updateLoading = document.getElementById('updateLoading');
 
+    if (!toast || !updateNowBtn || !updateLaterBtn) {
+      console.error('[App] Update toast elements not found');
+      return;
+    }
+
     toast.classList.add('show');
 
     updateNowBtn.onclick = () => {
       // Show loading state
       updateActions.style.display = 'none';
       updateLoading.style.display = 'flex';
-      document.querySelector('#updateToast .update-message').textContent = 'Updating to latest version...';
+      
+      // Update title/subtitle
+      const updateTitle = document.getElementById('updateTitle');
+      const updateSubtitle = document.getElementById('updateSubtitle');
+      if (updateTitle) updateTitle.textContent = 'Updating...';
+      if (updateSubtitle) updateSubtitle.textContent = 'Please wait';
 
       // Tell the waiting service worker to skip waiting
       if (registration.waiting) {
