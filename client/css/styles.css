@@ -594,75 +594,79 @@ body {
 
 .screen-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 450px;
   animation: fadeInUp 0.6s ease-out;
   position: relative;
   z-index: 1;
+  padding: 0 20px;
+  margin: 0 auto;
 }
 
 .screen-header {
   text-align: center;
-  margin-bottom: 30px;
-}
-
-.screen-title {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--text-dark);
-  margin: 0 0 10px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.screen-subtitle {
-  font-size: 16px;
-  color: #7f8c8d;
-  margin: 0;
-  font-weight: 500;
-}
-
-.form-card {
-  background: white;
-  border-radius: 20px;
-  padding: 35px 30px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.form-group {
   margin-bottom: 25px;
 }
 
+.screen-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.screen-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-card {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
 .form-group:last-of-type {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
   font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 10px;
-  font-size: 14px;
+  color: white;
+  margin-bottom: 8px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .form-input {
   width: 100%;
-  padding: 14px 18px;
-  border: 2px solid #e8ecef;
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   font-size: 16px;
   font-weight: 500;
   transition: all 0.3s ease;
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.95);
   color: var(--text-dark);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: rgba(255, 255, 255, 0.8);
   background: white;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 .form-input::placeholder {
@@ -672,20 +676,20 @@ body {
 
 .form-input-code {
   text-align: center;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: 8px;
+  letter-spacing: 6px;
   text-transform: uppercase;
   font-family: 'Courier New', monospace;
-  padding: 18px;
+  padding: 14px;
 }
 
-/* Avatar Grid - Smaller Size */
+/* Avatar Grid - Much Smaller */
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .avatar-item {
@@ -693,44 +697,45 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  background: #f8f9fa;
-  border: 2px solid #e8ecef;
-  border-radius: 12px;
+  font-size: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
-  padding: 8px;
+  padding: 4px;
 }
 
 .avatar-item:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
   background: white;
-  border-color: #d0d5dd;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .avatar-item.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: white;
+  border-color: var(--secondary-color);
+  border-width: 3px;
   transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.3);
 }
 
 .avatar-item.selected::after {
   content: '✓';
   position: absolute;
-  bottom: -4px;
-  right: -4px;
+  bottom: -3px;
+  right: -3px;
   background: var(--secondary-color);
   color: white;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: bold;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -740,20 +745,20 @@ body {
 .form-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 30px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 /* Form Buttons */
 .btn-form {
-  padding: 16px 32px;
-  font-size: 17px;
+  padding: 14px 28px;
+  font-size: 16px;
   font-weight: 700;
   border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -771,33 +776,34 @@ body {
 
 .btn-form:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 .btn-form:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-form-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  color: #667eea;
+  font-weight: 800;
 }
 
 .btn-form-primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #f8f9fa;
 }
 
 .btn-form-secondary {
-  background: #f8f9fa;
-  color: var(--text-dark);
-  border: 2px solid #e8ecef;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-form-secondary:hover {
-  background: #e9ecef;
-  border-color: #d0d5dd;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 /* ============================================
@@ -1031,6 +1037,7 @@ body {
   padding: 20px;
   position: relative;
   z-index: 1;
+  margin: 0 auto;
 }
 
 .waiting-actions {
@@ -1138,9 +1145,9 @@ body {
 
 .player-slots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
   justify-items: center;
 }
 
@@ -1148,11 +1155,11 @@ body {
   background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
   border: 2px solid var(--secondary-color);
   border-radius: 12px;
-  padding: 20px;
+  padding: 12px;
   text-align: center;
   transition: all 0.3s ease;
   width: 100%;
-  max-width: 180px;
+  max-width: 130px;
   position: relative;
   animation: slot-appear 0.3s ease-out;
 }
@@ -1169,8 +1176,8 @@ body {
 }
 
 .player-slot-avatar {
-  font-size: 56px;
-  margin-bottom: 12px;
+  font-size: 40px;
+  margin-bottom: 8px;
   animation: avatar-bounce 0.5s ease-out;
 }
 
@@ -1189,25 +1196,26 @@ body {
 }
 
 .player-slot-name {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-dark);
   word-break: break-word;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .host-badge {
   display: inline-block;
   background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
   color: white;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
-  margin-top: 8px;
-  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+  padding: 3px 8px;
+  border-radius: 10px;
+  margin-top: 6px;
+  box-shadow: 0 2px 6px rgba(243, 156, 18, 0.3);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 /* How to Play Screen */
@@ -1449,10 +1457,11 @@ body {
 
 /* Players Container */
 .players-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
   width: 100%;
+  justify-content: center;
 }
 
 /* Player Card - Compact Design */
@@ -1467,6 +1476,9 @@ body {
   transition: all 0.3s ease;
   position: relative;
   border: 3px solid transparent;
+  flex: 1;
+  min-width: 0;
+  max-width: 250px;
 }
 
 .player-card.active {
@@ -1662,6 +1674,7 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 1;
+  margin: 0 auto;
 }
 
 .game-over-actions {
@@ -1942,7 +1955,7 @@ body {
   }
 
   .players-container {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    flex-wrap: nowrap;
     max-width: 1200px;
     margin: 0 auto 15px;
   }
@@ -1960,13 +1973,15 @@ body {
   }
 
   .players-container {
-    grid-template-columns: 1fr 1fr;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .player-card {
     padding: 10px;
     gap: 8px;
+    flex: 1 1 calc(50% - 4px);
+    max-width: none;
   }
 
   .player-avatar {
@@ -2039,9 +2054,8 @@ body {
     height: 300px;
   }
 
-  /* Room screens mobile */
   .screen-container {
-    padding: 20px;
+    padding: 0 15px;
   }
 
   .screen-title {
@@ -2052,8 +2066,22 @@ body {
     font-size: 14px;
   }
 
+  .avatar-grid {
+    gap: 6px;
+  }
+
+  .avatar-item {
+    font-size: 20px;
+    padding: 3px;
+  }
+
+  .form-input {
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
   .form-card {
-    padding: 25px 20px;
+    padding: 0;
   }
 
   .form-input {
@@ -2157,8 +2185,13 @@ body {
   }
 
   .players-container {
-    grid-template-columns: 1fr;
+    flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .player-card {
+    flex: 1 1 100%;
+    max-width: none;
   }
 
   .canvas-container {
@@ -2172,20 +2205,20 @@ body {
   }
 
   .player-slots {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
   }
 
   .player-slot {
-    padding: 15px;
+    padding: 10px;
   }
 
   .player-slot-avatar {
-    font-size: 48px;
+    font-size: 36px;
   }
 
   .player-slot-name {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .final-scores {
@@ -2213,13 +2246,13 @@ body {
 
   /* Avatar selector small mobile */
   .avatar-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
 
   .avatar-item {
-    font-size: 32px;
-    border-radius: 12px;
+    font-size: 20px;
+    border-radius: 8px;
   }
 
   .screen-title {
@@ -2227,7 +2260,7 @@ body {
   }
 
   .form-input-code {
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: 4px;
   }
 
