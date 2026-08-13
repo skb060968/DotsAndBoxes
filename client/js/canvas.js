@@ -1,5 +1,5 @@
-// Canvas Drawing and Interaction Logic
-class GameCanvas {
+// Canvas Drawing and Interaction Logic - ES6 Module
+export default class GameCanvas {
   constructor(canvasId, gridRows, gridCols, onLineClick) {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas.getContext('2d');

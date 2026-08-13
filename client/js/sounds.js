@@ -1,5 +1,5 @@
-// Sound Effects Manager
-class SoundManager {
+// Sound Effects Manager - ES6 Module
+export class SoundManager {
   constructor() {
     this.enabled = true;
     this.volume = 0.5;
@@ -191,5 +191,5 @@ class SoundManager {
   }
 }
 
-// Create global sound manager instance
-window.soundManager = new SoundManager();
+// Create and export global sound manager instance
+export const soundManager = new SoundManager();

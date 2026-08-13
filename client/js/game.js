@@ -1,7 +1,7 @@
-// Game State Management Helper (Client-side)
+// Game State Management Helper (Client-side) - ES6 Module
 // This file contains utility functions for game state management
 
-class GameStateManager {
+export default class GameStateManager {
   constructor() {
     this.localState = null;
   }
@@ -96,6 +96,3 @@ class GameStateManager {
     }
   }
 }
-
-// Export for use in other files
-window.GameStateManager = GameStateManager;

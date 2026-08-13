@@ -1,7 +1,7 @@
-// Simple QR Code Generator
+// Simple QR Code Generator - ES6 Module
 // Based on QR Code specification - generates QR codes without external libraries
 
-class QRCodeGenerator {
+export class QRCodeGenerator {
   constructor() {
     this.canvas = null;
     this.ctx = null;
@@ -133,5 +133,5 @@ class QRCodeGenerator {
   }
 }
 
-// Create global instance
-window.qrGenerator = new QRCodeGenerator();
+// Create and export global instance
+export const qrGenerator = new QRCodeGenerator();

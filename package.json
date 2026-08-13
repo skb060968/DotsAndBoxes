@@ -2,11 +2,21 @@
   "name": "dots-and-boxes-pwa",
   "version": "2.0.0",
   "description": "A PWA multiplayer Dots and Boxes game with Firebase",
+  "type": "module",
   "scripts": {
-    "serve": "python -m http.server 8000 -d client",
-    "build": "echo 'No build step required - static site with Firebase'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "python -m http.server 8000 -d client"
   },
   "keywords": ["pwa", "game", "multiplayer", "dots-and-boxes", "firebase"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^10.12.0"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0",
+    "vite-plugin-pwa": "^0.20.0"
+  }
 }

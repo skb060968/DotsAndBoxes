@@ -1,4 +1,9 @@
-// Main Application Logic - Firebase Version
+// Main Application Logic - Firebase Version - ES6 Module
+import { FirebaseDB } from './firebase-config.js';
+import GameCanvas from './canvas.js';
+import { soundManager } from './sounds.js';
+import { qrGenerator } from './qrcode.js';
+
 class DotsAndBoxesApp {
   constructor() {
     this.gameState = null;
@@ -30,8 +35,8 @@ class DotsAndBoxesApp {
     
     // Initialize sound on first user interaction
     document.addEventListener('click', () => {
-      if (!window.soundManager.initialized) {
-        window.soundManager.init();
+      if (!soundManager.initialized) {
+        soundManager.init();
       }
     }, { once: true });
     
@@ -64,71 +69,71 @@ class DotsAndBoxesApp {
   setupEventListeners() {
     // Splash screen buttons
     document.getElementById('createRoomBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showScreen('createRoomScreen');
     });
 
     document.getElementById('joinRoomBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showScreen('joinRoomScreen');
     });
 
     document.getElementById('howToPlayBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showScreen('howtoScreen');
     });
 
     // Create room screen
     document.getElementById('createRoomConfirmBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.createRoom();
     });
 
     document.getElementById('createRoomBackBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showScreen('splashScreen');
     });
 
     // Join room screen
     document.getElementById('joinRoomConfirmBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.joinRoom();
     });
 
     document.getElementById('joinRoomBackBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showScreen('splashScreen');
     });
 
     // How to play screen
     document.getElementById('howToPlayBackBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showScreen('splashScreen');
     });
 
     // Waiting screen
     document.getElementById('startGameBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.startGame();
     });
 
     document.getElementById('copyRoomCodeBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.copyRoomCode();
     });
 
     document.getElementById('shareRoomBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.shareRoom();
     });
 
     document.getElementById('generateQRBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.showQRCode();
     });
 
     document.getElementById('closeQRModal').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.closeQRModal();
     });
 
@@ -139,24 +144,24 @@ class DotsAndBoxesApp {
     });
 
     document.getElementById('cancelWaitBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.leaveRoom();
     });
 
     // Game screen
     document.getElementById('leaveGameBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.leaveGame();
     });
 
     // Game over screen
     document.getElementById('rematchBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.requestRematch();
     });
 
     document.getElementById('mainMenuBtn').addEventListener('click', () => {
-      window.soundManager.playClick();
+      soundManager.playClick();
       this.leaveGame();
     });
 
@@ -184,7 +189,7 @@ class DotsAndBoxesApp {
     
     container.querySelectorAll('.avatar-option').forEach(avatar => {
       avatar.addEventListener('click', () => {
-        window.soundManager.playClick();
+        soundManager.playClick();
         container.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
         avatar.classList.add('selected');
         this.playerAvatar = avatar.getAttribute('data-avatar') || avatar.textContent;
@@ -201,7 +206,7 @@ class DotsAndBoxesApp {
     
     if (!this.playerName) {
       this.showToast('Please enter your name', 'error');
-      window.soundManager.playError();
+      soundManager.playError();
       return;
     }
     
@@ -301,7 +306,7 @@ class DotsAndBoxesApp {
       
       if (!roomResult) {
         this.showToast('Room not found', 'error');
-        window.soundManager.playError();
+        soundManager.playError();
         return;
       }
       
@@ -310,14 +315,14 @@ class DotsAndBoxesApp {
       // Check if room is full
       if (room.currentPlayers >= room.maxPlayers) {
         this.showToast('Room is full', 'error');
-        window.soundManager.playError();
+        soundManager.playError();
         return;
       }
       
       // Check if room is already playing
       if (room.status === 'playing') {
         this.showToast('Game already in progress', 'error');
-        window.soundManager.playError();
+        soundManager.playError();
         return;
       }
       
@@ -355,13 +360,13 @@ class DotsAndBoxesApp {
       document.getElementById('displayRoomCode').textContent = this.roomCode;
       
       this.showToast('Joined room successfully!', 'success');
-      window.soundManager.playJoin();
+      soundManager.playJoin();
       console.log(`Joined room: ${this.roomCode} (${this.roomId})`);
       
     } catch (error) {
       console.error('Error joining room:', error);
       this.showToast('Failed to join room', 'error');
-      window.soundManager.playError();
+      soundManager.playError();
     }
   }
 
@@ -458,26 +463,26 @@ class DotsAndBoxesApp {
     // Create player cards
     this.createPlayerCards();
     
-    window.soundManager.playWin();
+    soundManager.playWin();
   }
 
   async makeMove(line) {
     // Validate it's player's turn
     if (this.gameState.currentPlayer !== this.playerNumber) {
       this.showToast("Not your turn!", 'error');
-      window.soundManager.playError();
+      soundManager.playError();
       return;
     }
     
     // Check if line is already drawn
     if (line.type === 'horizontal') {
       if (this.gameState.horizontalLines[line.row][line.col] !== 0) {
-        window.soundManager.playError();
+        soundManager.playError();
         return;
       }
     } else {
       if (this.gameState.verticalLines[line.row][line.col] !== 0) {
-        window.soundManager.playError();
+        soundManager.playError();
         return;
       }
     }
@@ -514,14 +519,14 @@ class DotsAndBoxesApp {
         this.gameState.scores[this.playerNumber] = newScore;
         
         // Player gets another turn
-        window.soundManager.playBoxComplete();
+        soundManager.playBoxComplete();
       } else {
         // Next player's turn
         const nextPlayer = (this.playerNumber % this.players.length) + 1;
         await FirebaseDB.game.setCurrentPlayer(this.roomId, nextPlayer);
         this.gameState.currentPlayer = nextPlayer;
         
-        window.soundManager.playLineDraw();
+        soundManager.playLineDraw();
       }
       
       // Check if game is over
@@ -535,7 +540,7 @@ class DotsAndBoxesApp {
     } catch (error) {
       console.error('Error making move:', error);
       this.showToast('Failed to make move', 'error');
-      window.soundManager.playError();
+      soundManager.playError();
     }
   }
 
@@ -789,7 +794,7 @@ class DotsAndBoxesApp {
   }
 
   createPlayerCards() {
-    const container = document.getElementById('playerCards');
+    const container = document.getElementById('playersContainer');
     container.innerHTML = '';
     
     this.players.forEach(player => {
@@ -858,7 +863,7 @@ class DotsAndBoxesApp {
     `).join('');
     
     // Play win sound
-    window.soundManager.playWin();
+    soundManager.playWin();
   }
 
   // UI Helper Functions
@@ -932,7 +937,7 @@ class DotsAndBoxesApp {
     
     container.innerHTML = '';
     
-    const qrImage = window.qrGenerator.generate(url, 256);
+    const qrImage = qrGenerator.generate(url, 256);
     container.appendChild(qrImage);
     
     document.getElementById('qrRoomCode').textContent = this.roomCode;
@@ -1003,6 +1008,11 @@ class DotsAndBoxesApp {
 }
 
 // Initialize app when page loads
+let app;
 window.addEventListener('DOMContentLoaded', () => {
-  window.app = new DotsAndBoxesApp();
+  app = new DotsAndBoxesApp();
 });
+
+// Export for module use
+export default DotsAndBoxesApp;
+export { app };
