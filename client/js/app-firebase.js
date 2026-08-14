@@ -459,6 +459,10 @@ class DotsAndBoxesApp {
   showGameScreen() {
     this.showScreen('gameScreen');
     
+    console.log('[showGameScreen] Game state:', this.gameState);
+    console.log('[showGameScreen] My player number:', this.playerNumber);
+    console.log('[showGameScreen] Current player:', this.gameState?.currentPlayer);
+    
     // Initialize canvas with correct parameters
     const gridRows = 11; // 11 rows of dots
     const gridCols = 6;  // 6 columns of dots
@@ -480,6 +484,11 @@ class DotsAndBoxesApp {
   }
 
   async makeMove(line) {
+    // Debug logging
+    console.log('[makeMove] Current player:', this.gameState.currentPlayer);
+    console.log('[makeMove] My player number:', this.playerNumber);
+    console.log('[makeMove] Players:', this.players);
+    
     // Validate it's player's turn
     if (this.gameState.currentPlayer !== this.playerNumber) {
       this.showToast("Not your turn!", 'error');
