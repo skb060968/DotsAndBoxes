@@ -122,7 +122,6 @@ class DotsAndBoxesApp {
     const startGameBtn = document.getElementById('startGameBtn');
     if (startGameBtn) {
       startGameBtn.addEventListener('click', () => {
-        console.log('[Start Game] Button clicked');
         soundManager.playClick();
         this.startGame();
       });
@@ -401,9 +400,6 @@ class DotsAndBoxesApp {
   }
 
   handleRoomUpdate(roomData) {
-    console.log('[handleRoomUpdate] Room status:', roomData.status);
-    console.log('[handleRoomUpdate] Room data:', roomData);
-    
     // Update players list
     this.players = Object.values(roomData.players || {}).sort((a, b) => a.playerNumber - b.playerNumber);
     
@@ -417,8 +413,6 @@ class DotsAndBoxesApp {
         const isHost = roomData.players[this.playerId]?.isHost;
         const hasMinPlayers = this.players.length >= 2;
         
-        console.log('[handleRoomUpdate] isHost:', isHost, 'hasMinPlayers:', hasMinPlayers);
-        
         if (isHost && hasMinPlayers) {
           startBtn.style.display = 'block';
         } else {
@@ -426,16 +420,16 @@ class DotsAndBoxesApp {
         }
       }
     } else if (roomData.status === 'playing') {
-      console.log('[handleRoomUpdate] Game is playing, showing game screen');
       // Update game state
       this.gameState = roomData.game;
       
-      // If game screen not visible, show it
-      if (document.getElementById('gameScreen').style.display !== 'flex') {
+      // If game screen not visible, show it (ONLY ONCE)
+      const gameScreenElement = document.getElementById('gameScreen');
+      if (gameScreenElement && gameScreenElement.style.display !== 'flex') {
         this.showGameScreen();
       }
       
-      // Render game
+      // Render game (if canvas already exists)
       if (this.canvas) {
         this.canvas.drawBoard(this.gameState);
       }
@@ -455,24 +449,19 @@ class DotsAndBoxesApp {
   }
 
   async startGame() {
-    console.log('[startGame] Called, roomId:', this.roomId);
     try {
       await FirebaseDB.rooms.update(this.roomId, {
         status: 'playing'
       });
       
-      console.log('[startGame] Status updated to playing');
+      console.log('Game started');
     } catch (error) {
-      console.error('[startGame] Error:', error);
+      console.error('Error starting game:', error);
     }
   }
 
   showGameScreen() {
     this.showScreen('gameScreen');
-    
-    console.log('[showGameScreen] Game state:', this.gameState);
-    console.log('[showGameScreen] My player number:', this.playerNumber);
-    console.log('[showGameScreen] Current player:', this.gameState?.currentPlayer);
     
     // Initialize canvas with correct parameters
     const gridRows = 11; // 11 rows of dots
@@ -495,11 +484,6 @@ class DotsAndBoxesApp {
   }
 
   async makeMove(line) {
-    // Debug logging
-    console.log('[makeMove] Current player:', this.gameState.currentPlayer);
-    console.log('[makeMove] My player number:', this.playerNumber);
-    console.log('[makeMove] Players:', this.players);
-    
     // Validate it's player's turn
     if (this.gameState.currentPlayer !== this.playerNumber) {
       this.showToast("Not your turn!", 'error');

@@ -103,8 +103,6 @@ export default class GameCanvas {
     
     const nearestLine = this.getNearestLine(x, y);
     
-    console.log('[Canvas] Mouse move - x:', x, 'y:', y, 'nearest:', nearestLine);
-    
     if (nearestLine && this.isLineAvailable(nearestLine)) {
       this.hoveredLine = nearestLine;
       this.canvas.style.cursor = 'pointer';
@@ -117,12 +115,8 @@ export default class GameCanvas {
   }
 
   handleClick(e) {
-    console.log('[Canvas] Click detected, hovered line:', this.hoveredLine);
     if (this.hoveredLine && this.isLineAvailable(this.hoveredLine)) {
-      console.log('[Canvas] Line is available, calling onLineClick');
       this.onLineClick(this.hoveredLine);
-    } else {
-      console.log('[Canvas] Line not available or no hovered line');
     }
   }
 
@@ -142,8 +136,7 @@ export default class GameCanvas {
   }
 
   getNearestLine(x, y) {
-    const threshold = Math.max(25, this.cellSize * 0.5); // Increased from 15 and 0.3
-    console.log('[getNearestLine] threshold:', threshold, 'cellSize:', this.cellSize);
+    const threshold = Math.max(25, this.cellSize * 0.5);
     let nearestLine = null;
     let minDistance = threshold;
     
@@ -179,7 +172,6 @@ export default class GameCanvas {
       }
     }
     
-    console.log('[getNearestLine] returning:', nearestLine, 'minDistance:', minDistance);
     return nearestLine;
   }
 

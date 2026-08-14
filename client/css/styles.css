@@ -1458,11 +1458,12 @@ body {
 
 /* Players Container */
 .players-container {
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   width: 100%;
-  justify-content: center;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 /* Player Card - Compact Design */
@@ -1477,9 +1478,6 @@ body {
   transition: all 0.3s ease;
   position: relative;
   border: 3px solid transparent;
-  flex: 1;
-  min-width: 0;
-  max-width: 250px;
 }
 
 .player-card.active {
@@ -1956,7 +1954,7 @@ body {
   }
 
   .players-container {
-    flex-wrap: nowrap;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     max-width: 1200px;
     margin: 0 auto 15px;
   }
@@ -1974,15 +1972,13 @@ body {
   }
 
   .players-container {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
 
   .player-card {
     padding: 10px;
     gap: 8px;
-    flex: 1 1 calc(50% - 4px);
-    max-width: none;
   }
 
   .player-avatar {
@@ -2187,13 +2183,8 @@ body {
   }
 
   .players-container {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
     gap: 8px;
-  }
-
-  .player-card {
-    flex: 1 1 100%;
-    max-width: none;
   }
 
   .canvas-container {
