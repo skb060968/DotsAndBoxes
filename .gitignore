@@ -1,66 +1,44 @@
 # Dependencies
 node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+pnpm-debug.log*
+lerna-debug.log*
 
-# Environment variables (Firebase config)
-.env
-.env*
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-*.log
-logs/
-
-# OS files
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
 Thumbs.db
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Build outputs
-dist/
-build/
-out/
-coverage/
-.next/
-
-# Testing
-.nyc_output/
-
-# Vercel
-.vercel
 
 # Firebase
 .firebase/
 firebase-debug.log
 firestore-debug.log
-database-debug.log
-pubsub-debug.log
 ui-debug.log
 
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-# Documentation build
-docs/.vuepress/dist/
-
-# Local development
-.local/
+# Testing
+coverage/
+.nyc_output/

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Multiplayer Dots and Boxes game - Play with 2-4 friends online" />
+  
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/icons/favicon.ico" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  
+  <title>Dots and Boxes</title>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    
+    <!-- ====================================================================
+         Menu Screen
+         ==================================================================== -->
+    <div id="menuScreen" class="screen">
+      <div class="screen-content">
+        <h1>Dots and Boxes</h1>
+        <p style="text-align: center; margin-bottom: 2rem;">
+          Connect the dots, complete the boxes, win the game!
+        </p>
+        <div class="screen-actions">
+          <button id="createRoomBtn">Create Room</button>
+          <button id="joinRoomBtn" class="secondary">Join Room</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Create Room Screen
+         ==================================================================== -->
+    <div id="createScreen" class="screen" hidden>
+      <div class="screen-content">
+        <h1>Create Room</h1>
+        <form id="createRoomForm">
+          <div class="form-group">
+            <label for="createNameInput">Your Name</label>
+            <input 
+              type="text" 
+              id="createNameInput" 
+              placeholder="Enter your name"
+              maxlength="20"
+              required
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Choose Avatar</label>
+            <div id="createAvatarPicker" class="avatar-picker"></div>
+          </div>
+          
+          <div class="screen-actions">
+            <button type="submit">Create Room</button>
+            <button type="button" id="backToMenuFromCreate" class="secondary">Back</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Join Room Screen
+         ==================================================================== -->
+    <div id="joinScreen" class="screen" hidden>
+      <div class="screen-content">
+        <h1>Join Room</h1>
+        <form id="joinRoomForm">
+          <div class="form-group">
+            <label for="joinCodeInput">Room Code</label>
+            <input 
+              type="text" 
+              id="joinCodeInput" 
+              placeholder="Enter 6-digit code"
+              maxlength="6"
+              required
+              autocomplete="off"
+              style="text-transform: uppercase;"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label for="joinNameInput">Your Name</label>
+            <input 
+              type="text" 
+              id="joinNameInput" 
+              placeholder="Enter your name"
+              maxlength="20"
+              required
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Choose Avatar</label>
+            <div id="joinAvatarPicker" class="avatar-picker"></div>
+          </div>
+          
+          <div class="screen-actions">
+            <button type="submit">Join Room</button>
+            <button type="button" id="backToMenuFromJoin" class="secondary">Back</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Lobby Screen
+         ==================================================================== -->
+    <div id="lobbyScreen" class="screen" hidden>
+      <div class="screen-content">
+        <h1>Room Lobby</h1>
+        
+        <div class="room-code-display">
+          <p>Room Code</p>
+          <h2 id="lobbyRoomCode">------</h2>
+        </div>
+        
+        <div class="lobby-players">
+          <h3 style="margin-bottom: 1rem;">Players</h3>
+          <div id="lobbyPlayerList"></div>
+        </div>
+        
+        <div class="lobby-actions">
+          <button id="startGameBtn" disabled>Waiting for players...</button>
+          <button id="shareRoomBtn" class="secondary">Share</button>
+        </div>
+        
+        <div style="margin-top: 1rem;">
+          <button id="backToMenuFromLobby" class="danger" style="width: 100%;">Leave Room</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Game Screen
+         ==================================================================== -->
+    <div id="gameScreen" class="screen" hidden>
+      <div class="game-container">
+        <!-- Player Cards -->
+        <div id="playerCards" class="player-cards"></div>
+        
+        <!-- SVG Grid -->
+        <div class="grid-container">
+          <svg id="gameGrid"></svg>
+        </div>
+        
+        <!-- Leave Button -->
+        <div class="game-actions">
+          <button id="leaveGameBtn" class="danger">Leave Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Victory Screen
+         ==================================================================== -->
+    <div id="victoryScreen" class="screen" hidden>
+      <div class="screen-content">
+        <div id="victoryResults"></div>
+        
+        <div class="screen-actions" style="margin-top: 2rem;">
+          <button id="backToMenuFromVictory">Back to Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Loading Overlay
+         ==================================================================== -->
+    <div id="loadingOverlay" hidden>
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <p id="loadingMessage">Loading...</p>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Toast Container
+         ==================================================================== -->
+    <div id="toastContainer"></div>
+
+    <!-- ====================================================================
+         Utility Controls
+         ==================================================================== -->
+    <div class="utility-controls">
+      <button id="muteBtn" aria-label="Toggle sound">🔊</button>
+    </div>
+
+    <!-- ====================================================================
+         Accessibility
+         ==================================================================== -->
+    <div id="ariaAnnouncer" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  </div>
+
+  <!-- Main Script -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
