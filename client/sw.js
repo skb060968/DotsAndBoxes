@@ -1,5 +1,5 @@
 // Service Worker for Dots and Boxes PWA
-const CACHE_NAME = 'dots-and-boxes-v2.8.0';
+const CACHE_NAME = 'dots-and-boxes-v3.0.0';
 const OFFLINE_PAGE = '/offline.html';
 
 // Assets to cache immediately on install

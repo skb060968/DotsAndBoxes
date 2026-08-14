@@ -119,10 +119,14 @@ class DotsAndBoxesApp {
     });
 
     // Waiting screen
-    document.getElementById('startGameBtn').addEventListener('click', () => {
-      soundManager.playClick();
-      this.startGame();
-    });
+    const startGameBtn = document.getElementById('startGameBtn');
+    if (startGameBtn) {
+      startGameBtn.addEventListener('click', () => {
+        console.log('[Start Game] Button clicked');
+        soundManager.playClick();
+        this.startGame();
+      });
+    }
 
     document.getElementById('copyRoomCodeBtn').addEventListener('click', () => {
       soundManager.playClick();
@@ -397,6 +401,9 @@ class DotsAndBoxesApp {
   }
 
   handleRoomUpdate(roomData) {
+    console.log('[handleRoomUpdate] Room status:', roomData.status);
+    console.log('[handleRoomUpdate] Room data:', roomData);
+    
     // Update players list
     this.players = Object.values(roomData.players || {}).sort((a, b) => a.playerNumber - b.playerNumber);
     
@@ -410,6 +417,8 @@ class DotsAndBoxesApp {
         const isHost = roomData.players[this.playerId]?.isHost;
         const hasMinPlayers = this.players.length >= 2;
         
+        console.log('[handleRoomUpdate] isHost:', isHost, 'hasMinPlayers:', hasMinPlayers);
+        
         if (isHost && hasMinPlayers) {
           startBtn.style.display = 'block';
         } else {
@@ -417,6 +426,7 @@ class DotsAndBoxesApp {
         }
       }
     } else if (roomData.status === 'playing') {
+      console.log('[handleRoomUpdate] Game is playing, showing game screen');
       // Update game state
       this.gameState = roomData.game;
       
@@ -445,14 +455,15 @@ class DotsAndBoxesApp {
   }
 
   async startGame() {
+    console.log('[startGame] Called, roomId:', this.roomId);
     try {
       await FirebaseDB.rooms.update(this.roomId, {
         status: 'playing'
       });
       
-      console.log('Game started');
+      console.log('[startGame] Status updated to playing');
     } catch (error) {
-      console.error('Error starting game:', error);
+      console.error('[startGame] Error:', error);
     }
   }
 

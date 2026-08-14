@@ -115,8 +115,12 @@ export default class GameCanvas {
   }
 
   handleClick(e) {
+    console.log('[Canvas] Click detected, hovered line:', this.hoveredLine);
     if (this.hoveredLine && this.isLineAvailable(this.hoveredLine)) {
+      console.log('[Canvas] Line is available, calling onLineClick');
       this.onLineClick(this.hoveredLine);
+    } else {
+      console.log('[Canvas] Line not available or no hovered line');
     }
   }
 
