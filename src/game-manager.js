@@ -12,6 +12,8 @@
  */
 
 import { withRetry, logError } from './firebase-recovery.js';
+import { db } from './firebase-config.js';
+import { ref, update, serverTimestamp } from 'firebase/database';
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SECTION 1 — CONSTANTS
@@ -473,23 +475,13 @@ export function computeFinalRankings(state, players) {
 // SECTION 7 — FIREBASE I/O (host-guarded)
 // ═════════════════════════════════════════════════════════════════════════════
 
-async function loadDatabase() {
-  const [config, rtdb] = await Promise.all([
-    import('./firebase-config.js'),
-    import('firebase/database'),
-  ]);
-  return { db: config.db, ref: rtdb.ref, update: rtdb.update };
-}
-
 async function resolveServerTimestamp(options = {}) {
   if (typeof options.serverTimestamp === 'function') return options.serverTimestamp();
-  const rtdb = await import('firebase/database');
-  return rtdb.serverTimestamp();
+  return serverTimestamp();
 }
 
 async function applyUpdates(updates, options = {}) {
   if (typeof options.writer === 'function') return options.writer(updates);
-  const { db, ref, update } = await loadDatabase();
   return update(ref(db), updates);
 }
 
