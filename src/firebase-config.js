@@ -17,6 +17,16 @@ export const db = getDatabase(app);
 export const auth = getAuth(app);
 
 /**
+ * No-op initializer kept for main.js compatibility.
+ * Firebase initializes eagerly via the module-level calls above;
+ * this function exists so callers can `await initFirebase()` without error.
+ */
+export async function initFirebase() {
+  // Ensure auth is warmed up before the rest of the app proceeds
+  await authReady;
+}
+
+/**
  * Resolves once one stable anonymous identity is ready for RTDB authorization.
  * A persisted user is reused; anonymous sign-in starts only after Auth reports
  * no current user.

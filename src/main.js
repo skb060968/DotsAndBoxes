@@ -17,13 +17,20 @@ import {
 } from './firebase-sync.js';
 import {
   startGame,
+  drawLine,
   applyLine,
+  updateGameState,
+  saveRankings,
+  initializeGame,
   isGameOver,
   getWinners,
+  computeFinalRankings,
   GRID_COLS,
   GRID_ROWS,
+  PHASES,
   areAdjacent,
   getLineKeyBetweenDots,
+  parseLineKey,
 } from './game-manager.js';
 import {
   saveSession,
@@ -43,15 +50,16 @@ const DOT_SPACING = 60;
 const LINE_STROKE_WIDTH = 4;
 const GRID_PADDING = 40;
 const TOAST_DURATION = 3000;
+const GAME_NAME = 'Dots and Boxes';
 
-// Game state
+// Room / session state
 let roomCode = null;
 let playerIndex = -1;
 let isHost = false;
 let playerName = '';
 let roomListener = null;
 
-// Current game data
+// Current game data (kept in sync via Firebase listener)
 let currentMeta = {};
 let currentPlayers = {};
 let currentGame = null;
@@ -99,9 +107,9 @@ function showToast(message, type = 'info') {
   toast.textContent = message;
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
-  
+
   container.appendChild(toast);
-  
+
   setTimeout(() => toast.classList.add('show'), 10);
   setTimeout(() => {
     toast.classList.remove('show');
@@ -122,7 +130,7 @@ function announce(message) {
 function renderAvatarPicker(containerId, onSelect) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  
+
   container.innerHTML = '';
   PLAYER_AVATARS.forEach((emoji) => {
     const btn = document.createElement('button');
@@ -131,7 +139,7 @@ function renderAvatarPicker(containerId, onSelect) {
     btn.textContent = emoji;
     btn.setAttribute('aria-label', `Select ${emoji} avatar`);
     btn.addEventListener('click', () => {
-      container.querySelectorAll('.avatar-btn').forEach((b) => 
+      container.querySelectorAll('.avatar-btn').forEach((b) =>
         b.classList.remove('selected')
       );
       btn.classList.add('selected');
@@ -139,7 +147,7 @@ function renderAvatarPicker(containerId, onSelect) {
     });
     container.appendChild(btn);
   });
-  
+
   // Auto-select first
   const firstBtn = container.querySelector('.avatar-btn');
   if (firstBtn) {
@@ -165,13 +173,13 @@ async function handleCreateRoom(event) {
   event.preventDefault();
   const nameInput = document.getElementById('createNameInput');
   const name = nameInput.value.trim();
-  
+
   if (!name) {
     showToast('Please enter your name', 'error');
     nameInput.focus();
     return;
   }
-  
+
   try {
     showLoading('Creating room...');
     const result = await createRoom(name, selectedCreateAvatar);
@@ -179,11 +187,11 @@ async function handleCreateRoom(event) {
     playerIndex = result.playerIndex;
     isHost = true;
     playerName = name;
-    
+
     saveSession({ roomCode, playerIndex, isHost, playerName });
     await setupDisconnectHandler(roomCode, playerIndex);
     startRoomListener();
-    
+
     showScreen('lobbyScreen');
     document.getElementById('lobbyRoomCode').textContent = roomCode;
     hideLoading();
@@ -202,12 +210,12 @@ async function handleJoinRoom(event) {
   const nameInput = document.getElementById('joinNameInput');
   const code = codeInput.value.trim().toUpperCase();
   const name = nameInput.value.trim();
-  
+
   if (!code || !name) {
     showToast('Please enter room code and name', 'error');
     return;
   }
-  
+
   try {
     showLoading('Joining room...');
     const result = await joinRoom(code, name, selectedJoinAvatar);
@@ -215,11 +223,11 @@ async function handleJoinRoom(event) {
     playerIndex = result.playerIndex;
     isHost = false;
     playerName = name;
-    
+
     saveSession({ roomCode, playerIndex, isHost, playerName });
     await setupDisconnectHandler(roomCode, playerIndex);
     startRoomListener();
-    
+
     hideLoading();
     announce(`Joined room ${roomCode}`);
     playSound('tap');
@@ -232,10 +240,10 @@ async function handleJoinRoom(event) {
 
 async function handleLeaveRoom() {
   if (!roomCode) return;
-  
+
   const confirmed = confirm('Leave this game?');
   if (!confirmed) return;
-  
+
   try {
     if (isHost) {
       await deleteRoom(roomCode);
@@ -260,7 +268,7 @@ function startRoomListener() {
     roomListener();
     roomListener = null;
   }
-  
+
   roomListener = listenRoom(roomCode, {
     onMetaChange: (meta) => {
       currentMeta = meta;
@@ -289,6 +297,9 @@ function startRoomListener() {
       currentGame = game;
       if (status === 'playing' && currentScreen === 'gameScreen') {
         renderGame();
+      }
+      if (status === 'finished' && currentScreen === 'gameScreen') {
+        showVictory();
       }
     },
     onRoomDeleted: () => {
@@ -321,23 +332,23 @@ function cleanupRoom() {
 
 function updateLobby() {
   if (currentScreen !== 'lobbyScreen') return;
-  
+
   const list = document.getElementById('lobbyPlayerList');
   if (!list) return;
-  
+
   list.innerHTML = '';
-  
+
   const playerEntries = Object.entries(currentPlayers).sort((a, b) => {
     const indexA = parseInt(a[0].split('_')[1]);
     const indexB = parseInt(b[0].split('_')[1]);
     return indexA - indexB;
   });
-  
+
   playerEntries.forEach(([key, player]) => {
     const index = parseInt(key.split('_')[1]);
     const emoji = player.emoji || PLAYER_AVATARS[index];
     const connected = player.connected !== false;
-    
+
     const item = document.createElement('div');
     item.className = `lobby-player ${!connected ? 'disconnected' : ''}`;
     item.innerHTML = `
@@ -347,26 +358,34 @@ function updateLobby() {
     `;
     list.appendChild(item);
   });
-  
+
   // Update start button
   const startBtn = document.getElementById('startGameBtn');
   if (startBtn) {
     const playerCount = Object.keys(currentPlayers).length;
     startBtn.disabled = !isHost || playerCount < 2;
-    startBtn.textContent = playerCount < 2 
-      ? 'Waiting for players...' 
+    startBtn.textContent = playerCount < 2
+      ? 'Waiting for players...'
       : 'Start Game';
   }
+
+  // Keep room code display in sync (e.g. after session restore)
+  const codeEl = document.getElementById('lobbyRoomCode');
+  if (codeEl && roomCode) codeEl.textContent = roomCode;
 }
 
 async function handleStartGame() {
   if (!isHost || !roomCode) return;
-  
+
   try {
     showLoading('Starting game...');
-    const playerKeys = Object.keys(currentPlayers);
-    await startGame(roomCode, playerKeys);
+    // Build a proper initialState using the pure game-manager helper
+    const initialState = initializeGame(currentPlayers);
+    const result = await startGame(roomCode, initialState, { isHost: true });
     hideLoading();
+    if (!result.ok) {
+      showToast(result.message || 'Failed to start game', 'error');
+    }
   } catch (err) {
     hideLoading();
     showToast(err.message || 'Failed to start game', 'error');
@@ -387,31 +406,27 @@ function renderGame() {
 function renderGrid() {
   const svg = document.getElementById('gameGrid');
   if (!svg) return;
-  
-  // Clear existing
+
   svg.innerHTML = '';
-  
-  // Calculate dimensions
+
   const gridWidth = (GRID_COLS - 1) * DOT_SPACING + 2 * GRID_PADDING;
   const gridHeight = (GRID_ROWS - 1) * DOT_SPACING + 2 * GRID_PADDING;
   svg.setAttribute('viewBox', `0 0 ${gridWidth} ${gridHeight}`);
   svg.setAttribute('width', gridWidth);
   svg.setAttribute('height', gridHeight);
-  
-  // Create layers
+
   const boxesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   boxesLayer.id = 'boxesLayer';
   svg.appendChild(boxesLayer);
-  
+
   const linesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   linesLayer.id = 'linesLayer';
   svg.appendChild(linesLayer);
-  
+
   const dotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   dotsLayer.id = 'dotsLayer';
   svg.appendChild(dotsLayer);
-  
-  // Render content
+
   renderBoxes(boxesLayer);
   renderLines(linesLayer);
   renderDots(dotsLayer);
@@ -419,34 +434,53 @@ function renderGrid() {
 
 function renderBoxes(layer) {
   if (!currentGame?.boxes) return;
-  
-  Object.entries(currentGame.boxes).forEach(([boxKey, owner]) => {
-    const [col, row] = boxKey.split(',').map(Number);
+
+  Object.entries(currentGame.boxes).forEach(([key, boxData]) => {
+    // Box keys are "col_row" (underscore-separated), not comma-separated
+    const parts = key.split('_');
+    const col = Number(parts[0]);
+    const row = Number(parts[1]);
+    if (!Number.isFinite(col) || !Number.isFinite(row)) return;
+
     const x = GRID_PADDING + col * DOT_SPACING;
     const y = GRID_PADDING + row * DOT_SPACING;
-    
+
+    // boxData is {playerId, completedAt} — extract numeric player index from playerId
+    const playerId = boxData?.playerId ?? boxData;
+    const ownerIndex = typeof playerId === 'string'
+      ? parseInt(playerId.split('_')[1], 10)
+      : Number(playerId);
+
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('x', x);
     rect.setAttribute('y', y);
     rect.setAttribute('width', DOT_SPACING);
     rect.setAttribute('height', DOT_SPACING);
-    rect.setAttribute('class', `box box-${owner}`);
-    rect.setAttribute('data-owner', owner);
-    
+    rect.setAttribute('class', `box box-${ownerIndex}`);
+    rect.setAttribute('data-owner', ownerIndex);
+
     layer.appendChild(rect);
   });
 }
 
 function renderLines(layer) {
   if (!currentGame?.lines) return;
-  
-  Object.entries(currentGame.lines).forEach(([lineKey, owner]) => {
-    const [dir, col, row] = lineKey.split(',');
-    const c = Number(col);
-    const r = Number(row);
-    
+
+  Object.entries(currentGame.lines).forEach(([key, lineData]) => {
+    // Line keys are "h_col_row" or "v_col_row" — use parseLineKey helper
+    const parsed = parseLineKey(key);
+    if (!parsed) return;
+
+    const { type: dir, col: c, row: r } = parsed;
+
+    // lineData is {playerId, timestamp} — extract numeric player index
+    const playerId = lineData?.playerId ?? lineData;
+    const ownerIndex = typeof playerId === 'string'
+      ? parseInt(playerId.split('_')[1], 10)
+      : Number(playerId);
+
     let x1, y1, x2, y2;
-    
+
     if (dir === 'h') {
       x1 = GRID_PADDING + c * DOT_SPACING;
       y1 = GRID_PADDING + r * DOT_SPACING;
@@ -458,16 +492,16 @@ function renderLines(layer) {
       x2 = x1;
       y2 = y1 + DOT_SPACING;
     }
-    
+
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', x1);
     line.setAttribute('y1', y1);
     line.setAttribute('x2', x2);
     line.setAttribute('y2', y2);
-    line.setAttribute('class', `line line-${owner}`);
-    line.setAttribute('data-owner', owner);
+    line.setAttribute('class', `line line-${ownerIndex}`);
+    line.setAttribute('data-owner', ownerIndex);
     line.setAttribute('stroke-width', LINE_STROKE_WIDTH);
-    
+
     layer.appendChild(line);
   });
 }
@@ -477,7 +511,7 @@ function renderDots(layer) {
     for (let col = 0; col < GRID_COLS; col++) {
       const x = GRID_PADDING + col * DOT_SPACING;
       const y = GRID_PADDING + row * DOT_SPACING;
-      
+
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       circle.setAttribute('cx', x);
       circle.setAttribute('cy', y);
@@ -486,9 +520,9 @@ function renderDots(layer) {
       circle.setAttribute('data-col', col);
       circle.setAttribute('data-row', row);
       circle.style.cursor = 'pointer';
-      
+
       circle.addEventListener('click', () => handleDotClick(col, row));
-      
+
       layer.appendChild(circle);
     }
   }
@@ -500,20 +534,16 @@ function renderDots(layer) {
 
 function handleDotClick(col, row) {
   if (!currentGame || currentStatus !== 'playing') return;
-  
-  const currentPlayerKey = `player_${currentGame.currentTurn}`;
-  const myPlayerKey = `player_${playerIndex}`;
-  
-  if (currentPlayerKey !== myPlayerKey) {
+
+  // currentTurn is a numeric player index stored directly on the game state
+  if (currentGame.currentTurn !== playerIndex) {
     showToast('Not your turn', 'warning');
     return;
   }
-  
+
   if (!selectedDot) {
-    // First dot selection
     selectDot(col, row);
   } else {
-    // Second dot - attempt to draw line
     attemptDrawLine(col, row);
   }
 }
@@ -528,17 +558,12 @@ function selectDot(col, row) {
 function highlightDot(col, row, selected) {
   const svg = document.getElementById('gameGrid');
   if (!svg) return;
-  
-  const dots = svg.querySelectorAll('.dot');
-  dots.forEach((dot) => {
+
+  svg.querySelectorAll('.dot').forEach((dot) => {
     const c = parseInt(dot.getAttribute('data-col'));
     const r = parseInt(dot.getAttribute('data-row'));
     if (c === col && r === row) {
-      if (selected) {
-        dot.classList.add('selected');
-      } else {
-        dot.classList.remove('selected');
-      }
+      dot.classList.toggle('selected', selected);
     }
   });
 }
@@ -546,27 +571,26 @@ function highlightDot(col, row, selected) {
 function highlightValidNeighbors(col, row) {
   const svg = document.getElementById('gameGrid');
   if (!svg) return;
-  
-  // Clear previous highlights
+
   svg.querySelectorAll('.dot').forEach((d) => d.classList.remove('valid-neighbor'));
-  
-  // Check all adjacent dots
+
   const neighbors = [
     { col: col - 1, row },
     { col: col + 1, row },
     { col, row: row - 1 },
     { col, row: row + 1 },
   ];
-  
+
+  const lines = currentGame?.lines ?? {};
+
   neighbors.forEach((neighbor) => {
     if (neighbor.col < 0 || neighbor.col >= GRID_COLS) return;
     if (neighbor.row < 0 || neighbor.row >= GRID_ROWS) return;
-    
-    // Check if line already exists
-    const lineKey = getLineKeyBetweenDots(col, row, neighbor.col, neighbor.row);
-    if (!lineKey || currentGame.lines[lineKey]) return;
-    
-    // Highlight this neighbor
+
+    // getLineKeyBetweenDots takes dot objects {col, row}, not flat args
+    const lk = getLineKeyBetweenDots({ col, row }, { col: neighbor.col, row: neighbor.row });
+    if (!lk || lines[lk]) return;
+
     svg.querySelectorAll('.dot').forEach((dot) => {
       const c = parseInt(dot.getAttribute('data-col'));
       const r = parseInt(dot.getAttribute('data-row'));
@@ -579,40 +603,77 @@ function highlightValidNeighbors(col, row) {
 
 async function attemptDrawLine(col, row) {
   if (!selectedDot) return;
-  
-  // Check if dots are adjacent
-  if (!areAdjacent(selectedDot.col, selectedDot.row, col, row)) {
+
+  // areAdjacent takes dot objects {col, row}, not flat args
+  if (!areAdjacent(selectedDot, { col, row })) {
     showToast('Dots must be adjacent', 'warning');
     clearSelection();
     return;
   }
-  
-  // Get line key
-  const lineKey = getLineKeyBetweenDots(selectedDot.col, selectedDot.row, col, row);
-  if (!lineKey) {
+
+  // getLineKeyBetweenDots takes dot objects
+  const lk = getLineKeyBetweenDots(selectedDot, { col, row });
+  if (!lk) {
     showToast('Invalid line', 'error');
     clearSelection();
     return;
   }
-  
-  // Check if line already exists
-  if (currentGame.lines[lineKey]) {
+
+  const lines = currentGame?.lines ?? {};
+  if (lines[lk]) {
     showToast('Line already drawn', 'warning');
     clearSelection();
     return;
   }
-  
-  // Apply line
+
+  const parsed = parseLineKey(lk);
+  if (!parsed) {
+    clearSelection();
+    return;
+  }
+
+  const myPlayerId = `player_${playerIndex}`;
+
   try {
-    const result = await applyLine(roomCode, lineKey, playerIndex);
-    
-    if (result.boxesCompleted > 0) {
-      playSound('victory', 0.6);
-      showToast(`+${result.boxesCompleted} box${result.boxesCompleted > 1 ? 'es' : ''}!`, 'success');
+    // 1. Write the line to Firebase (any player on their turn)
+    const writeResult = await drawLine(
+      roomCode,
+      myPlayerId,
+      parsed.type,
+      parsed.col,
+      parsed.row,
+    );
+
+    if (!writeResult.ok) {
+      showToast(writeResult.message || 'Failed to draw line', 'error');
+      clearSelection();
+      return;
+    }
+
+    // 2. Host computes updated state and persists it
+    if (isHost) {
+      const prevBoxCount = Object.keys(currentGame.boxes ?? {}).length;
+      const newState = applyLine(currentGame, myPlayerId, parsed.type, parsed.col, parsed.row);
+      const boxesCompleted = Object.keys(newState.boxes).length - prevBoxCount;
+
+      if (boxesCompleted > 0) {
+        playSound('victory', 0.6);
+        showToast(`+${boxesCompleted} box${boxesCompleted > 1 ? 'es' : ''}!`, 'success');
+      } else {
+        playSound('line', 0.5);
+      }
+
+      if (isGameOver(newState)) {
+        const rankings = computeFinalRankings(newState, currentPlayers);
+        await updateGameState(roomCode, { ...newState, phase: PHASES.FINISHED }, { isHost: true });
+        await saveRankings(roomCode, rankings, { isHost: true });
+      } else {
+        await updateGameState(roomCode, newState, { isHost: true });
+      }
     } else {
       playSound('line', 0.5);
     }
-    
+
     clearSelection();
   } catch (err) {
     showToast(err.message || 'Failed to draw line', 'error');
@@ -625,7 +686,7 @@ function clearSelection() {
   selectedDot = null;
   const svg = document.getElementById('gameGrid');
   if (!svg) return;
-  
+
   svg.querySelectorAll('.dot').forEach((dot) => {
     dot.classList.remove('selected', 'valid-neighbor');
   });
@@ -638,21 +699,22 @@ function clearSelection() {
 function renderPlayerCards() {
   const container = document.getElementById('playerCards');
   if (!container) return;
-  
+
   container.innerHTML = '';
-  
+
   const playerEntries = Object.entries(currentPlayers).sort((a, b) => {
     const indexA = parseInt(a[0].split('_')[1]);
     const indexB = parseInt(b[0].split('_')[1]);
     return indexA - indexB;
   });
-  
+
   playerEntries.forEach(([key, player]) => {
     const index = parseInt(key.split('_')[1]);
     const emoji = player.emoji || PLAYER_AVATARS[index];
-    const boxCount = countPlayerBoxes(index);
+    // Pass full playerId string so countPlayerBoxes can match {playerId} objects
+    const boxCount = countPlayerBoxes(key);
     const isCurrentTurn = currentGame && currentGame.currentTurn === index;
-    
+
     const card = document.createElement('div');
     card.className = `player-card ${isCurrentTurn ? 'current-turn' : ''}`;
     card.innerHTML = `
@@ -662,18 +724,24 @@ function renderPlayerCards() {
         <div class="player-score">${boxCount} ${boxCount === 1 ? 'box' : 'boxes'}</div>
       </div>
     `;
-    
+
     container.appendChild(card);
   });
 }
 
-function countPlayerBoxes(playerIdx) {
+/**
+ * Count boxes owned by a player.
+ * @param {string} playerId - e.g. "player_0"
+ * Box values in game state are {playerId, completedAt} objects.
+ */
+function countPlayerBoxes(playerId) {
   if (!currentGame?.boxes) return 0;
-  return Object.values(currentGame.boxes).filter((owner) => owner === playerIdx).length;
+  return Object.values(currentGame.boxes).filter(
+    (boxData) => boxData?.playerId === playerId
+  ).length;
 }
 
 function updateTurnIndicator() {
-  // Player cards already show current turn via 'current-turn' class
   renderPlayerCards();
 }
 
@@ -682,37 +750,38 @@ function updateTurnIndicator() {
 // ============================================================================
 
 function showVictory() {
-  const winners = getWinners(currentGame, Object.keys(currentPlayers));
-  
+  // getWinners expects a state object with a scores map {playerId -> count}
+  const winners = getWinners(currentGame);
+
   const resultsContainer = document.getElementById('victoryResults');
   if (!resultsContainer) return;
-  
+
   resultsContainer.innerHTML = '';
-  
-  // Sort by score descending
-  const scores = [];
-  Object.entries(currentPlayers).forEach(([key, player]) => {
+
+  // Build display list from players + box counts
+  const scores = Object.entries(currentPlayers).map(([key, player]) => {
     const index = parseInt(key.split('_')[1]);
     const emoji = player.emoji || PLAYER_AVATARS[index];
-    const boxCount = countPlayerBoxes(index);
-    scores.push({ name: player.name, emoji, boxCount, index });
+    const boxCount = countPlayerBoxes(key);
+    return { name: player.name, emoji, boxCount, playerId: key };
   });
   scores.sort((a, b) => b.boxCount - a.boxCount);
-  
+
   // Winner announcement
   if (winners.length === 1) {
-    const winnerIdx = winners[0];
-    const winner = scores.find((s) => s.index === winnerIdx);
+    const winnerEntry = scores.find((s) => s.playerId === winners[0]);
     const title = document.createElement('h2');
-    title.textContent = `${winner.emoji} ${winner.name} wins!`;
+    title.textContent = winnerEntry
+      ? `${winnerEntry.emoji} ${winnerEntry.name} wins!`
+      : 'Winner!';
     resultsContainer.appendChild(title);
   } else {
     const title = document.createElement('h2');
-    title.textContent = 'Tie Game!';
+    title.textContent = winners.length > 1 ? 'Tie Game!' : 'Game Over!';
     resultsContainer.appendChild(title);
   }
-  
-  // Scores list
+
+  // Ranked scores list
   scores.forEach((player, rank) => {
     const item = document.createElement('div');
     item.className = 'victory-player';
@@ -724,7 +793,7 @@ function showVictory() {
     `;
     resultsContainer.appendChild(item);
   });
-  
+
   showScreen('victoryScreen');
   playSound('victory');
   announce('Game over');
@@ -755,19 +824,19 @@ function navigateToJoin() {
 async function attemptSessionRecovery() {
   const session = loadSession();
   if (!session) return false;
-  
+
   try {
     showLoading('Restoring session...');
     await restoreConnection(session.roomCode, session.playerIndex);
-    
+
     roomCode = session.roomCode;
     playerIndex = session.playerIndex;
     isHost = session.isHost;
     playerName = session.playerName;
-    
+
     await setupDisconnectHandler(roomCode, playerIndex);
     startRoomListener();
-    
+
     hideLoading();
     showToast('Session restored', 'success');
     return true;
@@ -786,29 +855,33 @@ async function attemptSessionRecovery() {
 
 async function init() {
   console.log('[init] Starting Dots and Boxes...');
-  
-  // Initialize Firebase
+
+  // Initialize Firebase (awaits auth ready)
   await initFirebase();
   initRecovery();
-  
+
   // Initialize audio
   initAudio();
-  
-  // Setup deep link handler
+
+  // Inject toast helper into deep-link-handler before calling it
   setShowToast(showToast);
-  initDeepLinkHandler((code) => {
-    if (!code) return;
-    showScreen('joinScreen');
-    const input = document.getElementById('joinCodeInput');
-    if (input) {
-      input.value = code;
-      document.getElementById('joinNameInput').focus();
-    }
+
+  // initDeepLinkHandler uses object-options API: {roomInputId, joinScreenId, gameName}
+  // It returns the detected room code (or null) and pre-fills the input itself.
+  const deepLinkedCode = initDeepLinkHandler({
+    roomInputId: 'joinCodeInput',
+    joinScreenId: 'joinScreen',
+    gameName: GAME_NAME,
   });
-  
+  if (deepLinkedCode) {
+    // Pre-fill happened; navigate to join screen and focus on name input
+    showScreen('joinScreen');
+    document.getElementById('joinNameInput')?.focus();
+  }
+
   // Initialize avatar pickers
   initAvatarPickers();
-  
+
   // Bind navigation
   document.getElementById('createRoomBtn')?.addEventListener('click', navigateToCreate);
   document.getElementById('joinRoomBtn')?.addEventListener('click', navigateToJoin);
@@ -823,19 +896,23 @@ async function init() {
     cleanupRoom();
     navigateToMenu();
   });
-  
+
   // Bind forms
   document.getElementById('createRoomForm')?.addEventListener('submit', handleCreateRoom);
   document.getElementById('joinRoomForm')?.addEventListener('submit', handleJoinRoom);
   document.getElementById('startGameBtn')?.addEventListener('click', handleStartGame);
-  
-  // Bind share button
+
+  // Share button — createShareHandler(roomCode, gameName) returns an async handler.
+  // We defer reading roomCode until click time via a wrapper closure.
   const shareBtn = document.getElementById('shareRoomBtn');
   if (shareBtn) {
-    shareBtn.addEventListener('click', createShareHandler(() => roomCode));
+    shareBtn.addEventListener('click', () => {
+      if (!roomCode) return;
+      createShareHandler(roomCode, GAME_NAME)();
+    });
   }
-  
-  // Bind mute toggle
+
+  // Mute toggle
   const muteBtn = document.getElementById('muteBtn');
   if (muteBtn) {
     muteBtn.addEventListener('click', () => {
@@ -843,14 +920,14 @@ async function init() {
       muteBtn.textContent = isMuted() ? '🔇' : '🔊';
     });
   }
-  
+
   // Attempt session recovery
   const recovered = await attemptSessionRecovery();
-  
-  if (!recovered) {
+
+  if (!recovered && currentScreen === 'menuScreen') {
     showScreen('menuScreen');
   }
-  
+
   console.log('[init] Ready');
 }
 

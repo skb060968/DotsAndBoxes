@@ -6,20 +6,13 @@
 const CACHE_VERSION = 'dots-and-boxes-v1';
 const RUNTIME_CACHE = 'runtime-cache-v1';
 
-// Core assets to cache on install
+// Core assets to cache on install.
+// In production (Vite build) JS is bundled into /assets/*.js — we only list
+// stable, predictable paths here. The runtime cache handles hashed bundles.
 const CORE_ASSETS = [
   '/',
   '/index.html',
-  '/style.css',
   '/manifest.json',
-  '/src/main.js',
-  '/src/firebase-config.js',
-  '/src/firebase-sync.js',
-  '/src/firebase-recovery.js',
-  '/src/game-manager.js',
-  '/src/session.js',
-  '/src/audio-manager.js',
-  '/src/deep-link-handler.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/sounds/tap.mp3',

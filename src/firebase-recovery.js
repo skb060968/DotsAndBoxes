@@ -116,3 +116,11 @@ export async function startConnectionMonitor() {
 export function setErrorContextProvider(provider) {
   // Hook for adding context to error logs
 }
+
+/**
+ * Initialize recovery — starts the connection monitor and wires up
+ * any app-wide recovery hooks. Called once during app bootstrap.
+ */
+export async function initRecovery() {
+  await startConnectionMonitor();
+}
