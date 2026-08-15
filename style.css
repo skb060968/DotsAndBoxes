@@ -243,10 +243,10 @@ label {
 }
 
 /* ============================================================================
-   Avatar Picker
+   Color Picker
    ============================================================================ */
 
-.avatar-picker {
+.color-picker {
   display: flex;
   gap: var(--spacing-sm);
   justify-content: center;
@@ -254,7 +254,7 @@ label {
   margin-top: var(--spacing-sm);
 }
 
-.avatar-btn {
+.color-btn {
   width: 3rem;
   height: 3rem;
   padding: 0;
@@ -267,12 +267,12 @@ label {
   transition: all var(--transition-fast);
 }
 
-.avatar-btn:hover {
+.color-btn:hover {
   background: var(--color-surface-hover);
   transform: scale(1.1);
 }
 
-.avatar-btn.selected {
+.color-btn.selected {
   border-color: var(--color-primary);
   background: var(--color-primary);
   transform: scale(1.1);
@@ -325,7 +325,7 @@ label {
   opacity: 0.5;
 }
 
-.lobby-player .player-avatar {
+.lobby-player .player-color {
   font-size: 1.5rem;
 }
 
@@ -394,7 +394,7 @@ label {
   transform: scale(1.05);
 }
 
-.player-card .player-avatar {
+.player-card .player-color {
   font-size: 1.75rem;
 }
 
@@ -590,7 +590,7 @@ label {
   color: #fbbf24;
 }
 
-.victory-player .player-avatar {
+.victory-player .player-color {
   font-size: 1.5rem;
 }
 
@@ -777,7 +777,7 @@ label {
     padding: var(--spacing-xs) var(--spacing-sm);
   }
   
-  .player-card .player-avatar {
+  .player-card .player-color {
     font-size: 1.25rem;
   }
   

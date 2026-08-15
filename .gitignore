@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Build output
 dist/
@@ -29,16 +30,38 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+*~
 
 # OS
 Thumbs.db
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 
 # Firebase
 .firebase/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+database-debug.log
 
 # Testing
 coverage/
 .nyc_output/
+*.test.js.snap
+
+# Vercel
+.vercel
+.vercel.json.bak
+
+# Cache
+.cache/
+.parcel-cache/
+.vite/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store?
