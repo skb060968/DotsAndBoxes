@@ -1,3 +1,4 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -8,4 +9,5 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
+  base: './',   // 👈 important for relative paths in production
 });
