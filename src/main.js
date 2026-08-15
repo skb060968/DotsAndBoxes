@@ -68,10 +68,8 @@ let currentStatus = 'lobby';
 // UI state
 let selectedDot = null;
 let currentScreen = 'menuScreen';
-<<<<<<< HEAD
 let selectedCreateAvatar = PLAYER_AVATARS[0];
 let selectedJoinAvatar = PLAYER_AVATARS[0];
-=======
 let selectedCreateColor = PLAYER_COLORS[0];
 let selectedJoinColor = PLAYER_COLORS[0];
 
