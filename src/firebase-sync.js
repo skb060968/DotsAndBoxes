@@ -22,12 +22,12 @@ const CREATE_ROOM_MAX_ATTEMPTS = 10;
 
 export const SCHEMA_VERSION = 1;
 export const HOST_LOSS_GRACE_MS = 30000;
-export const PLAYER_AVATARS = Object.freeze(['🔴', '🔵', '🟢', '🟡']);
+export const PLAYER_COLORS = Object.freeze(['🔴', '🔵', '🟢', '🟡']);
 
-function requestedAvatar(value) {
+function requestedColor(value) {
   if (value === undefined || value === null) return null;
-  if (typeof value !== 'string' || !PLAYER_AVATARS.includes(value)) {
-    throw new Error('Please choose a valid avatar');
+  if (typeof value !== 'string' || !PLAYER_COLORS.includes(value)) {
+    throw new Error('Please choose a valid color');
   }
   return value;
 }
@@ -37,16 +37,16 @@ function playerIndexFromKey(playerId) {
   return match ? Number(match[1]) : -1;
 }
 
-function resolvedAvatar(playerId, player) {
-  if (player && PLAYER_AVATARS.includes(player.emoji)) return player.emoji;
+function resolvedColor(playerId, player) {
+  if (player && PLAYER_COLORS.includes(player.color)) return player.color;
   const index = playerIndexFromKey(playerId);
-  return index >= 0 ? PLAYER_AVATARS[index] : null;
+  return index >= 0 ? PLAYER_COLORS[index] : null;
 }
 
-function isAvatarTaken(players, avatar) {
-  if (!avatar || !players || typeof players !== 'object') return false;
+function isColorTaken(players, color) {
+  if (!color || !players || typeof players !== 'object') return false;
   return Object.entries(players).some(([playerId, player]) => 
-    resolvedAvatar(playerId, player) === avatar
+    resolvedColor(playerId, player) === color
   );
 }
 
@@ -83,9 +83,9 @@ export function generateRoomCode() {
 /**
  * Creates a new room.
  */
-export async function createRoom(hostName, avatar) {
+export async function createRoom(hostName, color) {
   const uid = await getAuthUid();
-  const selectedAvatar = requestedAvatar(avatar);
+  const selectedColor = requestedColor(color);
 
   for (let attempt = 0; attempt < CREATE_ROOM_MAX_ATTEMPTS; attempt++) {
     const roomCode = generateRoomCode();
@@ -105,7 +105,7 @@ export async function createRoom(hostName, avatar) {
           name: hostName,
           uid,
           connected: true,
-          ...(selectedAvatar ? { emoji: selectedAvatar } : {}),
+          ...(selectedColor ? { color: selectedColor } : {}),
         },
       },
       game: null,
@@ -124,9 +124,9 @@ export async function createRoom(hostName, avatar) {
 /**
  * Joins an existing room.
  */
-export async function joinRoom(roomCode, playerName, avatar) {
+export async function joinRoom(roomCode, playerName, color) {
   const uid = await getAuthUid();
-  const selectedAvatar = requestedAvatar(avatar);
+  const selectedColor = requestedColor(color);
   const roomRef = ref(db, `${GAME_ID}-rooms/${roomCode}`);
   const snapshot = await get(roomRef);
   
@@ -152,8 +152,8 @@ export async function joinRoom(roomCode, playerName, avatar) {
       abortReason = 'room-full';
       return undefined;
     }
-    if (selectedAvatar && isAvatarTaken(players, selectedAvatar)) {
-      abortReason = 'avatar-taken';
+    if (selectedColor && isColorTaken(players, selectedColor)) {
+      abortReason = 'color-taken';
       return undefined;
     }
 
@@ -172,13 +172,13 @@ export async function joinRoom(roomCode, playerName, avatar) {
         name: playerName,
         uid,
         connected: true,
-        ...(selectedAvatar ? { emoji: selectedAvatar } : {}),
+        ...(selectedColor ? { color: selectedColor } : {}),
       },
     };
   }, { applyLocally: false });
 
   if (!result.committed || reservedIndex < 0) {
-    if (abortReason === 'avatar-taken') throw new Error('That avatar is already taken');
+    if (abortReason === 'color-taken') throw new Error('That color is already taken');
     if (abortReason === 'room-full') throw new Error(`Room is full (${MAX_PLAYERS} players maximum)`);
     throw new Error('Could not reserve a player slot. Please try again.');
   }

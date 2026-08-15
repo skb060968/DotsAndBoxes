@@ -1,5 +1,5 @@
 /**
- * Main UI Controller — Dots and Boxes
+ * Main UI Controller — Dots and Boxes (Modified Gameplay)
  * Handles all screens, SVG rendering, and game interaction
  */
 
@@ -13,7 +13,7 @@ import {
   setupDisconnectHandler,
   restoreConnection,
   removePlayer,
-  PLAYER_AVATARS,
+  PLAYER_COLORS,
 } from './firebase-sync.js';
 import {
   startGame,
@@ -59,7 +59,7 @@ let isHost = false;
 let playerName = '';
 let roomListener = null;
 
-// Current game data (kept in sync via Firebase listener)
+// Current game data
 let currentMeta = {};
 let currentPlayers = {};
 let currentGame = null;
@@ -68,9 +68,14 @@ let currentStatus = 'lobby';
 // UI state
 let selectedDot = null;
 let currentScreen = 'menuScreen';
+<<<<<<< HEAD
 let selectedCreateAvatar = PLAYER_AVATARS[0];
 let selectedJoinAvatar = PLAYER_AVATARS[0];
+=======
+let selectedCreateColor = PLAYER_COLORS[0];
+let selectedJoinColor = PLAYER_COLORS[0];
 
+>>>>>>> a6cbb7267daf1a4839e031b53dfb7977f07827d7
 // ============================================================================
 // Screen Management
 // ============================================================================
@@ -124,22 +129,22 @@ function announce(message) {
 }
 
 // ============================================================================
-// Avatar Picker
+// Color Picker
 // ============================================================================
 
-function renderAvatarPicker(containerId, onSelect) {
+function renderColorPicker(containerId, onSelect) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = '';
-  PLAYER_AVATARS.forEach((emoji) => {
+  PLAYER_COLORS.forEach((emoji) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'avatar-btn';
+    btn.className = 'color-btn';
     btn.textContent = emoji;
-    btn.setAttribute('aria-label', `Select ${emoji} avatar`);
+    btn.setAttribute('aria-label', `Select ${emoji} color`);
     btn.addEventListener('click', () => {
-      container.querySelectorAll('.avatar-btn').forEach((b) =>
+      container.querySelectorAll('.color-btn').forEach((b) =>
         b.classList.remove('selected')
       );
       btn.classList.add('selected');
@@ -149,19 +154,19 @@ function renderAvatarPicker(containerId, onSelect) {
   });
 
   // Auto-select first
-  const firstBtn = container.querySelector('.avatar-btn');
+  const firstBtn = container.querySelector('.color-btn');
   if (firstBtn) {
     firstBtn.classList.add('selected');
-    onSelect(PLAYER_AVATARS[0]);
+    onSelect(PLAYER_COLORS[0]);
   }
 }
 
-function initAvatarPickers() {
-  renderAvatarPicker('createAvatarPicker', (emoji) => {
-    selectedCreateAvatar = emoji;
+function initColorPickers() {
+  renderColorPicker('createColorPicker', (emoji) => {
+    selectedCreateColor = emoji;
   });
-  renderAvatarPicker('joinAvatarPicker', (emoji) => {
-    selectedJoinAvatar = emoji;
+  renderColorPicker('joinColorPicker', (emoji) => {
+    selectedJoinColor = emoji;
   });
 }
 
@@ -182,7 +187,7 @@ async function handleCreateRoom(event) {
 
   try {
     showLoading('Creating room...');
-    const result = await createRoom(name, selectedCreateAvatar);
+    const result = await createRoom(name, selectedCreateColor);
     roomCode = result.roomCode;
     playerIndex = result.playerIndex;
     isHost = true;
@@ -218,7 +223,7 @@ async function handleJoinRoom(event) {
 
   try {
     showLoading('Joining room...');
-    const result = await joinRoom(code, name, selectedJoinAvatar);
+    const result = await joinRoom(code, name, selectedJoinColor);
     roomCode = code;
     playerIndex = result.playerIndex;
     isHost = false;
@@ -346,13 +351,13 @@ function updateLobby() {
 
   playerEntries.forEach(([key, player]) => {
     const index = parseInt(key.split('_')[1]);
-    const emoji = player.emoji || PLAYER_AVATARS[index];
+    const color = player.color || PLAYER_COLORS[index];
     const connected = player.connected !== false;
 
     const item = document.createElement('div');
     item.className = `lobby-player ${!connected ? 'disconnected' : ''}`;
     item.innerHTML = `
-      <span class="player-avatar">${emoji}</span>
+      <span class="player-color">${color}</span>
       <span class="player-name">${player.name}</span>
       ${!connected ? '<span class="status-badge">Disconnected</span>' : ''}
     `;
@@ -530,12 +535,9 @@ function renderDots(layer) {
 
 // ============================================================================
 // Dot Interaction
-// ============================================================================
-
 function handleDotClick(col, row) {
   if (!currentGame || currentStatus !== 'playing') return;
 
-  // currentTurn is a numeric player index stored directly on the game state
   if (currentGame.currentTurn !== playerIndex) {
     showToast('Not your turn', 'warning');
     return;
@@ -572,7 +574,7 @@ function highlightValidNeighbors(col, row) {
   const svg = document.getElementById('gameGrid');
   if (!svg) return;
 
-  svg.querySelectorAll('.dot').forEach((d) => d.classList.remove('valid-neighbor'));
+  svg.querySelectorAll('.dot').forEach((d) => d.classList.remove('raised'));
 
   const neighbors = [
     { col: col - 1, row },
@@ -587,31 +589,25 @@ function highlightValidNeighbors(col, row) {
     if (neighbor.col < 0 || neighbor.col >= GRID_COLS) return;
     if (neighbor.row < 0 || neighbor.row >= GRID_ROWS) return;
 
-    // getLineKeyBetweenDots takes dot objects {col, row}, not flat args
-    const lk = getLineKeyBetweenDots({ col, row }, { col: neighbor.col, row: neighbor.row });
+    const lk = getLineKeyBetweenDots({ col, row }, neighbor);
     if (!lk || lines[lk]) return;
 
-    svg.querySelectorAll('.dot').forEach((dot) => {
-      const c = parseInt(dot.getAttribute('data-col'));
-      const r = parseInt(dot.getAttribute('data-row'));
-      if (c === neighbor.col && r === neighbor.row) {
-        dot.classList.add('valid-neighbor');
-      }
-    });
+    const dot = svg.querySelector(
+      `.dot[data-col="${neighbor.col}"][data-row="${neighbor.row}"]`
+    );
+    if (dot) dot.classList.add('raised');
   });
 }
 
 async function attemptDrawLine(col, row) {
   if (!selectedDot) return;
 
-  // areAdjacent takes dot objects {col, row}, not flat args
   if (!areAdjacent(selectedDot, { col, row })) {
     showToast('Dots must be adjacent', 'warning');
     clearSelection();
     return;
   }
 
-  // getLineKeyBetweenDots takes dot objects
   const lk = getLineKeyBetweenDots(selectedDot, { col, row });
   if (!lk) {
     showToast('Invalid line', 'error');
@@ -635,7 +631,6 @@ async function attemptDrawLine(col, row) {
   const myPlayerId = `player_${playerIndex}`;
 
   try {
-    // 1. Write the line to Firebase (any player on their turn)
     const writeResult = await drawLine(
       roomCode,
       myPlayerId,
@@ -650,7 +645,6 @@ async function attemptDrawLine(col, row) {
       return;
     }
 
-    // 2. Host computes updated state and persists it
     if (isHost) {
       const prevBoxCount = Object.keys(currentGame.boxes ?? {}).length;
       const newState = applyLine(currentGame, myPlayerId, parsed.type, parsed.col, parsed.row);
@@ -688,10 +682,9 @@ function clearSelection() {
   if (!svg) return;
 
   svg.querySelectorAll('.dot').forEach((dot) => {
-    dot.classList.remove('selected', 'valid-neighbor');
+    dot.classList.remove('selected', 'raised');
   });
 }
-
 // ============================================================================
 // Player Cards
 // ============================================================================
@@ -710,7 +703,7 @@ function renderPlayerCards() {
 
   playerEntries.forEach(([key, player]) => {
     const index = parseInt(key.split('_')[1]);
-    const emoji = player.emoji || PLAYER_AVATARS[index];
+    const color = player.color || PLAYER_COLORS[index];
     // Pass full playerId string so countPlayerBoxes can match {playerId} objects
     const boxCount = countPlayerBoxes(key);
     const isCurrentTurn = currentGame && currentGame.currentTurn === index;
@@ -718,7 +711,7 @@ function renderPlayerCards() {
     const card = document.createElement('div');
     card.className = `player-card ${isCurrentTurn ? 'current-turn' : ''}`;
     card.innerHTML = `
-      <div class="player-avatar">${emoji}</div>
+      <div class="player-color">${color}</div>
       <div class="player-info">
         <div class="player-name">${player.name}</div>
         <div class="player-score">${boxCount} ${boxCount === 1 ? 'box' : 'boxes'}</div>
@@ -761,9 +754,9 @@ function showVictory() {
   // Build display list from players + box counts
   const scores = Object.entries(currentPlayers).map(([key, player]) => {
     const index = parseInt(key.split('_')[1]);
-    const emoji = player.emoji || PLAYER_AVATARS[index];
+    const color = player.color || PLAYER_COLORS[index];
     const boxCount = countPlayerBoxes(key);
-    return { name: player.name, emoji, boxCount, playerId: key };
+    return { name: player.name, color, boxCount, playerId: key };
   });
   scores.sort((a, b) => b.boxCount - a.boxCount);
 
@@ -772,7 +765,7 @@ function showVictory() {
     const winnerEntry = scores.find((s) => s.playerId === winners[0]);
     const title = document.createElement('h2');
     title.textContent = winnerEntry
-      ? `${winnerEntry.emoji} ${winnerEntry.name} wins!`
+      ? `${winnerEntry.color} ${winnerEntry.name} wins!`
       : 'Winner!';
     resultsContainer.appendChild(title);
   } else {
@@ -787,7 +780,7 @@ function showVictory() {
     item.className = 'victory-player';
     item.innerHTML = `
       <span class="rank">#${rank + 1}</span>
-      <span class="player-avatar">${player.emoji}</span>
+      <span class="player-color">${player.color}</span>
       <span class="player-name">${player.name}</span>
       <span class="player-score">${player.boxCount} boxes</span>
     `;
@@ -879,8 +872,8 @@ async function init() {
     document.getElementById('joinNameInput')?.focus();
   }
 
-  // Initialize avatar pickers
-  initAvatarPickers();
+  // Initialize color pickers
+  initColorPickers();
 
   // Bind navigation
   document.getElementById('createRoomBtn')?.addEventListener('click', navigateToCreate);

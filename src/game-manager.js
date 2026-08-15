@@ -32,8 +32,8 @@ export const TOTAL_BOXES = BOXES_COLS * BOXES_ROWS;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 4;
 
-/** Player avatars (colored circles) */
-export const PLAYER_AVATARS = Object.freeze(['🔴', '🔵', '🟢', '🟡']);
+/** Player colors (colored circles) */
+export const PLAYER_COLORS = Object.freeze(['🔴', '🔵', '🟢', '🟡']);
 
 /** Room code pattern */
 export const ROOM_CODE_LENGTH = 4;

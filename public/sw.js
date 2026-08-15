@@ -3,8 +3,8 @@
  * Handles offline caching and resource management
  */
 
-const CACHE_VERSION = 'dots-and-boxes-v1';
-const RUNTIME_CACHE = 'runtime-cache-v1';
+const CACHE_VERSION = 'dots-and-boxes-v3.5.0';
+const RUNTIME_CACHE = 'runtime-cache-v3.5.0';
 
 // Core assets to cache on install.
 // In production (Vite build) JS is bundled into /assets/*.js — we only list
