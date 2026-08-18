@@ -14,6 +14,13 @@ import {
   stopPresenceTracking,
 } from './firebase-sync.js';
 import { showScreen, showToast } from './platform-ui.js';
+import {
+  isMuted,
+  playSound,
+  setMuted,
+  startBackgroundMusic,
+  stopBackgroundMusic,
+} from './sound-manager.js';
 
 const AVATARS = ['🦊', '🐼', '🐸', '🦁', '🐙', '🦄'];
 const COLORS = [
@@ -104,6 +111,7 @@ function validName(id) {
 }
 
 function releaseRoomState() {
+  stopBackgroundMusic();
   unsubscribeRoom?.();
   unsubscribeRoom = null;
   stopPresenceTracking().catch(() => {});
@@ -167,6 +175,7 @@ function renderLobbyPlayers() {
 }
 
 async function setupLobby() {
+  stopBackgroundMusic();
   document.getElementById('lobby-code').textContent = roomCode;
   document.getElementById('start-game').hidden = !isHost;
   document.getElementById('leave-lobby').disabled = false;
@@ -229,15 +238,28 @@ async function leaveCurrentRoom() {
   }
 }
 
+function handleGameComplete(result) {
+  stopBackgroundMusic();
+  const highest = Math.max(...result.winners.map((winner) => winner.boxes));
+  const names = result.winners.map((winner) => winner.name);
+  document.getElementById('result-summary').textContent = names.length === 1
+    ? `${names[0]} wins with ${highest} boxes!`
+    : `${names.join(' and ')} tie with ${highest} boxes!`;
+  playSound('win');
+  showScreen('results');
+}
+
 function startGame() {
   if (!isHost) return;
   if (players.length < 2) {
+    playSound('error');
     showToast('At least 2 players are needed.');
     return;
   }
   showScreen('gameplay');
+  startBackgroundMusic();
   document.getElementById('end-game').hidden = false;
-  initializeBoard({ players });
+  initializeBoard({ players, onComplete: handleGameComplete });
 }
 
 function previewPlayers() {
@@ -277,13 +299,13 @@ function wireShare() {
 function wireMute() {
   const input = document.getElementById('mute');
   const icon = document.getElementById('mute-icon');
-  input.checked = localStorage.getItem('dots-muted') === 'true';
-  const sync = () => {
-    icon.textContent = input.checked ? '🔇' : '🔊';
-    localStorage.setItem('dots-muted', String(input.checked));
+  const syncIcon = () => { icon.textContent = input.checked ? '🔇' : '🔊'; };
+  input.checked = isMuted();
+  input.onchange = () => {
+    setMuted(input.checked);
+    syncIcon();
   };
-  input.onchange = sync;
-  sync();
+  syncIcon();
 }
 
 function wire() {
@@ -385,8 +407,9 @@ async function init() {
     isHost = true;
     players = previewPlayers();
     showScreen('gameplay');
+    startBackgroundMusic();
     document.getElementById('end-game').hidden = false;
-    initializeBoard({ players });
+    initializeBoard({ players, onComplete: handleGameComplete });
     return;
   }
 
