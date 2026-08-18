@@ -310,14 +310,70 @@ function wireMute() {
 
 function wire() {
   const joinCodeInput = document.getElementById('join-code');
+  let unsubscribeJoinPreview = null;
+  let previewedCode = null;
+
+  const applyTakenColors = (takenColors = []) => {
+    const taken = new Set(takenColors);
+    const buttons = [...document.querySelectorAll('[data-picker="join-color"] .color-pick')];
+    buttons.forEach((button) => {
+      const unavailable = taken.has(button.dataset.value);
+      const label = button.dataset.colorLabel || button.getAttribute('aria-label');
+      button.dataset.colorLabel = label;
+      button.disabled = unavailable;
+      button.classList.toggle('taken', unavailable);
+      button.setAttribute('aria-disabled', String(unavailable));
+      button.title = unavailable ? `${label} is already taken` : label;
+    });
+    const selected = buttons.find((button) => button.getAttribute('aria-pressed') === 'true');
+    if (!selected || selected.disabled) {
+      selected?.setAttribute('aria-pressed', 'false');
+      buttons.find((button) => !button.disabled)?.setAttribute('aria-pressed', 'true');
+    }
+  };
+
+  const stopJoinPreview = () => {
+    unsubscribeJoinPreview?.();
+    unsubscribeJoinPreview = null;
+    previewedCode = null;
+    applyTakenColors();
+  };
+
+  const startJoinPreview = (code) => {
+    if (!ROOM_CODE_RE.test(code)) {
+      stopJoinPreview();
+      return;
+    }
+    if (code === previewedCode && unsubscribeJoinPreview) return;
+    stopJoinPreview();
+    previewedCode = code;
+    unsubscribeJoinPreview = listenRoom(code, {
+      onPlayersChange: (roomPlayers) => {
+        applyTakenColors(Object.values(roomPlayers).map((player) => player?.color).filter(Boolean));
+      },
+      onRoomDeleted: () => applyTakenColors(),
+      onError: (error) => {
+        console.warn('Join color preview failed:', error);
+        applyTakenColors();
+      },
+    });
+  };
+
   joinCodeInput.addEventListener('input', () => {
     const normalized = normalizeTypedCode(joinCodeInput.value);
     if (joinCodeInput.value !== normalized) joinCodeInput.value = normalized;
+    startJoinPreview(normalized);
   });
   document.getElementById('home-host').onclick = () => showScreen('create-room');
-  document.getElementById('home-join').onclick = () => showScreen('join-room');
+  document.getElementById('home-join').onclick = () => {
+    stopJoinPreview();
+    showScreen('join-room');
+  };
   document.querySelectorAll('[data-home]').forEach((button) => {
-    button.onclick = () => roomCode ? leaveCurrentRoom() : showScreen('home');
+    button.onclick = () => {
+      stopJoinPreview();
+      return roomCode ? leaveCurrentRoom() : showScreen('home');
+    };
   });
 
   document.getElementById('create-submit').onclick = async (event) => {
@@ -356,6 +412,7 @@ function wire() {
         showToast(result.reason || 'Unable to join room.');
         return;
       }
+      stopJoinPreview();
       roomCode = normalizeRoomCode(code);
       playerIndex = result.playerIndex;
       isHost = false;
@@ -385,16 +442,77 @@ function wire() {
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register('/sw.js').then((registration) => {
+
+  const toast = document.getElementById('update-toast');
+  const message = document.getElementById('update-message');
+  const updateButton = document.getElementById('update-now');
+  const laterButton = document.getElementById('update-later');
+  let waitingWorker = null;
+  let updateAccepted = false;
+  let reloadStarted = false;
+
+  const setProgress = (updating, text = null) => {
+    updateButton.disabled = updating;
+    laterButton.disabled = updating;
+    updateButton.textContent = updating ? 'Updating…' : 'Update app';
+    message.textContent = text || (updating
+      ? 'Applying update… The app will reload automatically.'
+      : 'Update now, or choose Later to keep playing.');
+    toast.setAttribute('aria-busy', String(updating));
+  };
+
+  const showUpdate = (worker) => {
+    waitingWorker = worker || waitingWorker;
+    updateAccepted = false;
+    setProgress(false);
+    toast.hidden = false;
+  };
+
+  updateButton.addEventListener('click', () => {
+    if (updateAccepted) return;
+    updateAccepted = true;
+    setProgress(true);
+    if (!waitingWorker) {
+      requestAnimationFrame(() => requestAnimationFrame(() => location.reload()));
+      return;
+    }
+    try {
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    } catch (error) {
+      console.warn('Could not activate app update:', error);
+      updateAccepted = false;
+      setProgress(false, 'Update could not start. Please try again.');
+      updateButton.textContent = 'Try again';
+    }
+  });
+
+  laterButton.addEventListener('click', () => {
+    if (!updateAccepted) toast.hidden = true;
+  });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!updateAccepted || reloadStarted) return;
+    reloadStarted = true;
+    location.reload();
+  });
+
+  const start = () => navigator.serviceWorker.register('/sw.js').then((registration) => {
+    if (registration.waiting && navigator.serviceWorker.controller) {
+      showUpdate(registration.waiting);
+    }
+    setInterval(() => registration.update(), 5 * 60 * 1000);
     registration.addEventListener('updatefound', () => {
       const worker = registration.installing;
       worker?.addEventListener('statechange', () => {
         if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-          showToast('Update ready — refresh to apply.', 4000);
+          showUpdate(registration.waiting || worker);
         }
       });
     });
-  }).catch(() => {});
+  }).catch((error) => console.warn('Service worker registration failed:', error));
+
+  if (document.readyState === 'complete') start();
+  else window.addEventListener('load', start, { once: true });
 }
 
 async function init() {
@@ -446,7 +564,9 @@ async function init() {
   }
 
   if (ROOM_CODE_RE.test(linkedRoom)) {
-    document.getElementById('join-code').value = linkedRoom;
+    const input = document.getElementById('join-code');
+    input.value = linkedRoom;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
     showScreen('join-room');
   } else {
     showScreen('home');
