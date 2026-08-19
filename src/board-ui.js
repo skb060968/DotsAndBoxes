@@ -91,9 +91,11 @@ function addBox(boxKey, ownerKey) {
   renderedBoxes.add(boxKey);
 }
 
-function addEdge(moveKey, ownerKey, animate = false) {
+function addEdge(moveKey, ownerKey, animate = false, animationStart = null, animationEnd = null) {
   if (renderedEdges.has(moveKey)) return;
-  const [start, end] = moveKey.split('-').map(Number);
+  const storedPoints = moveKey.split('-').map(Number);
+  const start = animate && Number.isInteger(animationStart) ? animationStart : storedPoints[0];
+  const end = animate && Number.isInteger(animationEnd) ? animationEnd : storedPoints[1];
   const from = point(start);
   const to = point(end);
   const owner = playerByKey(ownerKey);
@@ -121,7 +123,7 @@ function addEdge(moveKey, ownerKey, animate = false) {
   renderedEdges.add(moveKey);
   if (animate) {
     playSound('linedraw');
-    setTimeout(() => [shadow, line, highlight].forEach((layer) => layer.classList.remove('temp')), reducedMotion() ? 0 : 300);
+    setTimeout(() => [shadow, line, highlight].forEach((layer) => layer.classList.remove('temp')), (reducedMotion() ? 0 : 300) + 1000);
   }
 }
 
@@ -257,7 +259,13 @@ export function renderBoardState(nextGame, options = {}) {
     && !renderedEdges.has(nextGame.lastMove.edgeKey);
   game = nextGame;
   Object.entries(game.edges || {}).forEach(([key, owner]) => {
-    addEdge(key, owner, shouldAnimate && key === game.lastMove?.edgeKey);
+    addEdge(
+      key,
+      owner,
+      shouldAnimate && key === game.lastMove?.edgeKey,
+      game.lastMove?.start,
+      game.lastMove?.end,
+    );
   });
   const previousBoxCount = renderedBoxes.size;
   Object.entries(game.boxes || {}).forEach(([key, owner]) => addBox(key, owner));
