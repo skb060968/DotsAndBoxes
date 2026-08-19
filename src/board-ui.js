@@ -1,21 +1,293 @@
 import { playSound } from './sound-manager.js';
-const NS='http://www.w3.org/2000/svg',COLS=6,ROWS=11,TOTAL_BOXES=(COLS-1)*(ROWS-1),X0=14,Y0=16,DX=14.4,DY=14.8;
-let svg,cards,message,players=[],active=0,selected=null,locked=false,finished=false,onComplete=null,edges=new Set(),boxes=new Map(),groups={};
-const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-const point=(id)=>({c:id%COLS,r:Math.floor(id/COLS),x:X0+(id%COLS)*DX,y:Y0+Math.floor(id/COLS)*DY});
-const key=(a,b)=>a<b?`${a}-${b}`:`${b}-${a}`;
-const adjacent=(a,b)=>{const p=point(a),q=point(b);return Math.abs(p.c-q.c)+Math.abs(p.r-q.r)===1};
-const usable=(a,b)=>adjacent(a,b)&&!edges.has(key(a,b));
-const el=(tag,attrs={})=>{const node=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));return node};
-const availableFrom=(id)=>Array.from({length:COLS*ROWS},(_,i)=>i).filter(i=>usable(id,i));
-function validTargets(){return selected===null?[]:availableFrom(selected)}
-function paintSelection(){svg.style.setProperty('--player',players[active].color);const targets=validTargets();svg.querySelectorAll('.dot').forEach((dot,i)=>{dot.classList.toggle('selected',i===selected);dot.classList.toggle('valid',targets.includes(i))})}
-function announce(text){message.textContent=text}
-function renderCards(){cards.innerHTML='';players.forEach((p,i)=>{const card=document.createElement('article');card.className=`player-card${i===active&&!finished?' active':''}`;card.style.setProperty('--player',p.color);card.innerHTML=`<span class="player-avatar" aria-hidden="true">${p.avatar}</span><span class="player-name"></span><span class="player-score">${p.boxes} box${p.boxes===1?'':'es'}</span>`;card.querySelector('.player-name').textContent=p.name;cards.append(card)})}
-function boxEdges(c,r){const tl=r*COLS+c,tr=tl+1,bl=tl+COLS,br=bl+1;return[key(tl,tr),key(bl,br),key(tl,bl),key(tr,br)]}
-function completedBy(edgeKey){const [a,b]=edgeKey.split('-').map(Number),p=point(a),q=point(b),candidates=[];if(p.r===q.r){const c=Math.min(p.c,q.c);if(p.r>0)candidates.push([c,p.r-1]);if(p.r<ROWS-1)candidates.push([c,p.r])}else{const r=Math.min(p.r,q.r);if(p.c>0)candidates.push([p.c-1,r]);if(p.c<COLS-1)candidates.push([p.c,r])}return candidates.filter(([c,r])=>!boxes.has(`${c}-${r}`)&&boxEdges(c,r).every(e=>edges.has(e)))}
-function claim(c,r){boxes.set(`${c}-${r}`,active);const rect=el('rect',{x:X0+c*DX+.9,y:Y0+r*DY+.9,width:DX-1.8,height:DY-1.8,rx:2,class:'box-claim'});rect.style.setProperty('--player',players[active].color);groups.boxes.append(rect)}
-async function commit(a,b){locked=true;selected=null;paintSelection();const p=point(a),q=point(b),line=el('line',{x1:p.x,y1:p.y,x2:q.x,y2:q.y,pathLength:1,class:'edge temp'});line.style.setProperty('--player',players[active].color);groups.lines.append(line);playSound('linedraw');await new Promise(resolve=>setTimeout(resolve,reduced()?0:300));line.classList.remove('temp');edges.add(key(a,b));const won=completedBy(key(a,b));won.forEach(([c,r])=>claim(c,r));if(won.length){players[active].boxes+=won.length;playSound('boxclaim');announce(`${players[active].name} claimed ${won.length===2?'two boxes':'a box'} and plays again.`)}else{active=(active+1)%players.length;announce(`${players[active].name}'s turn. Choose a dot.`)}if(boxes.size===TOTAL_BOXES){finished=true;const highest=Math.max(...players.map(player=>player.boxes)),winners=players.filter(player=>player.boxes===highest);announce(winners.length===1?`${winners[0].name} wins with ${highest} boxes!`:`${winners.map(player=>player.name).join(' and ')} tie with ${highest} boxes!`);renderCards();paintSelection();setTimeout(()=>onComplete?.({players:players.map(player=>({...player})),winners:winners.map(player=>({...player}))}),reduced()?0:450);return}renderCards();paintSelection();locked=false}
-function choose(id){if(locked||finished)return;if(selected===null){if(!availableFrom(id).length){playSound('error');announce('No available line from this dot.');return}playSound('tap');selected=id;announce('Now choose a glowing adjacent dot.');paintSelection();return}if(id===selected){playSound('tap');selected=null;announce(`${players[active].name}'s turn. Choose a dot.`);paintSelection();return}if(usable(selected,id)){const start=selected;commit(start,id);return}if(!availableFrom(id).length){playSound('error');announce('No available line from this dot. Choose a glowing dot or another starting dot.');return}playSound('tap');selected=id;announce('Start moved. Choose a glowing adjacent dot.');paintSelection()}
-function build(){svg.replaceChildren();const defs=el('defs');defs.innerHTML='<radialGradient id="dot-gradient" cx="35%" cy="25%"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#cbd5e1"/><stop offset="1" stop-color="#526579"/></radialGradient>';svg.append(defs);groups.boxes=el('g');groups.lines=el('g');groups.dots=el('g');groups.hits=el('g');svg.append(groups.boxes,groups.lines,groups.dots,groups.hits);for(let i=0;i<COLS*ROWS;i++){const p=point(i),dot=el('circle',{cx:p.x,cy:p.y,r:2.55,class:'dot'}),hit=el('circle',{cx:p.x,cy:p.y,r:6.2,class:'hit-target',tabindex:0,role:'button','aria-label':`Dot row ${p.r+1}, column ${p.c+1}`});hit.addEventListener('click',()=>choose(i));hit.addEventListener('focus',()=>dot.classList.add('keyboard-focus'));hit.addEventListener('blur',()=>dot.classList.remove('keyboard-focus'));hit.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();choose(i)}});groups.dots.append(dot);groups.hits.append(hit)}}
-export function initializeBoard(options={}){svg=document.getElementById('dots-board');cards=document.getElementById('player-cards');message=document.getElementById('game-message');players=(options.players||[]).map(player=>({...player,boxes:0}));onComplete=typeof options.onComplete==='function'?options.onComplete:null;active=0;selected=null;locked=false;finished=false;edges=new Set();boxes=new Map();build();renderCards();paintSelection();announce(`${players[active].name}'s turn. Choose a dot.`)}
+import { COLS, ROWS, edgeKey, isAdjacent, playerOrder } from './game-engine.js';
+
+const NS = 'http://www.w3.org/2000/svg';
+const X0 = 14;
+const Y0 = 16;
+const DX = 14.4;
+const DY = 14.8;
+
+let svg;
+let cards;
+let message;
+let players = [];
+let game = null;
+let localPlayerKey = null;
+let onMoveRequest = null;
+let selected = null;
+let locked = false;
+let renderedRound = null;
+let renderedRevision = -1;
+let renderedEdges = new Set();
+let renderedBoxes = new Set();
+let groups = {};
+
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const point = (id) => ({
+  column: id % COLS,
+  row: Math.floor(id / COLS),
+  x: X0 + (id % COLS) * DX,
+  y: Y0 + Math.floor(id / COLS) * DY,
+});
+const svgElement = (tag, attributes = {}) => {
+  const node = document.createElementNS(NS, tag);
+  Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+  return node;
+};
+const activeKey = () => game?.currentPlayerKey || playerOrder(game)[Number(game?.currentPlayerIndex || 0)] || null;
+const playerByKey = (key) => players.find((player) => player.slotKey === key);
+const lineAvailable = (a, b) => isAdjacent(a, b) && !game?.edges?.[edgeKey(a, b)];
+const availableFrom = (id) => Array.from({ length: COLS * ROWS }, (_, index) => index)
+  .filter((index) => lineAvailable(id, index));
+
+function announce(text) {
+  message.textContent = text;
+}
+
+function validTargets() {
+  return selected === null ? [] : availableFrom(selected);
+}
+
+function paintSelection() {
+  const current = playerByKey(activeKey());
+  svg.style.setProperty('--player', current?.color || '#2563eb');
+  const targets = validTargets();
+  svg.querySelectorAll('.dot').forEach((dot, index) => {
+    dot.classList.toggle('selected', index === selected);
+    dot.classList.toggle('valid', targets.includes(index));
+  });
+}
+
+function renderCards() {
+  const currentKey = activeKey();
+  cards.replaceChildren();
+  players.forEach((player) => {
+    const score = Number(game?.scores?.[player.slotKey] || 0);
+    const card = document.createElement('article');
+    card.className = `player-card${game?.status === 'playing' && player.slotKey === currentKey ? ' active' : ''}`;
+    card.style.setProperty('--player', player.color);
+    card.innerHTML = '<span class="player-avatar" aria-hidden="true"></span><span class="player-name"></span><span class="player-score"></span>';
+    card.querySelector('.player-avatar').textContent = player.avatar;
+    card.querySelector('.player-name').textContent = player.name;
+    card.querySelector('.player-score').textContent = `${score} box${score === 1 ? '' : 'es'}`;
+    cards.append(card);
+  });
+}
+
+function addBox(boxKey, ownerKey) {
+  if (renderedBoxes.has(boxKey)) return;
+  const [column, row] = boxKey.split('-').map(Number);
+  const owner = playerByKey(ownerKey);
+  const rect = svgElement('rect', {
+    x: X0 + column * DX + 0.9,
+    y: Y0 + row * DY + 0.9,
+    width: DX - 1.8,
+    height: DY - 1.8,
+    rx: 2,
+    class: 'box-claim',
+  });
+  rect.style.setProperty('--player', owner?.color || '#64748b');
+  groups.boxes.append(rect);
+  renderedBoxes.add(boxKey);
+}
+
+function addEdge(moveKey, ownerKey, animate = false) {
+  if (renderedEdges.has(moveKey)) return;
+  const [start, end] = moveKey.split('-').map(Number);
+  const from = point(start);
+  const to = point(end);
+  const owner = playerByKey(ownerKey);
+  const baseAttributes = {
+    x1: from.x, y1: from.y, x2: to.x, y2: to.y, pathLength: 1,
+  };
+  const shadow = svgElement('line', {
+    ...baseAttributes,
+    class: `edge-rod-shadow${animate ? ' temp' : ''}`,
+    transform: 'translate(.65 1)',
+  });
+  const line = svgElement('line', {
+    ...baseAttributes,
+    class: `edge${animate ? ' temp' : ''}`,
+  });
+  const highlight = svgElement('line', {
+    ...baseAttributes,
+    class: `edge-rod-highlight${animate ? ' temp' : ''}`,
+    transform: 'translate(-.35 -.45)',
+  });
+  if (animate) {
+    [shadow, line, highlight].forEach((layer) => layer.style.setProperty('--player', owner?.color || '#2563eb'));
+  }
+  groups.lines.append(shadow, line, highlight);
+  renderedEdges.add(moveKey);
+  if (animate) {
+    playSound('linedraw');
+    setTimeout(() => [shadow, line, highlight].forEach((layer) => layer.classList.remove('temp')), reducedMotion() ? 0 : 300);
+  }
+}
+
+function buildBoard() {
+  svg.replaceChildren();
+  const defs = svgElement('defs');
+  defs.innerHTML = '<radialGradient id="dot-gradient" cx="28%" cy="20%" r="74%"><stop offset="0" stop-color="#f8fafc"/><stop offset=".12" stop-color="#94a3b8"/><stop offset=".34" stop-color="#485564"/><stop offset=".68" stop-color="#1b2530"/><stop offset="1" stop-color="#070b10"/></radialGradient><filter id="peg-shadow" x="-60%" y="-60%" width="240%" height="240%"><feDropShadow dx=".8" dy="1.15" stdDeviation=".72" flood-color="#2b1a0d" flood-opacity=".62"/></filter>';
+  svg.append(defs);
+  groups.guides = svgElement('g', { class: 'guide-grid', 'aria-hidden': 'true' });
+  groups.boxes = svgElement('g');
+  groups.lines = svgElement('g');
+  groups.dots = svgElement('g');
+  groups.hits = svgElement('g');
+  svg.append(groups.guides, groups.boxes, groups.lines, groups.dots, groups.hits);
+
+  for (let row = 0; row < ROWS; row += 1) {
+    for (let column = 0; column < COLS - 1; column += 1) {
+      const start = point(row * COLS + column);
+      const end = point(row * COLS + column + 1);
+      groups.guides.append(svgElement('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, class: 'guide-line' }));
+    }
+  }
+  for (let row = 0; row < ROWS - 1; row += 1) {
+    for (let column = 0; column < COLS; column += 1) {
+      const start = point(row * COLS + column);
+      const end = point((row + 1) * COLS + column);
+      groups.guides.append(svgElement('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, class: 'guide-line' }));
+    }
+  }
+
+  for (let index = 0; index < COLS * ROWS; index += 1) {
+    const position = point(index);
+    const dot = svgElement('circle', { cx: position.x, cy: position.y, r: 2.55, class: 'dot' });
+    const highlight = svgElement('circle', {
+      cx: position.x - 0.72, cy: position.y - 0.76, r: 0.55,
+      class: 'peg-highlight', 'aria-hidden': 'true',
+    });
+    const hit = svgElement('circle', {
+      cx: position.x, cy: position.y, r: 6.2, class: 'hit-target', tabindex: 0,
+      role: 'button', 'aria-label': `Dot row ${position.row + 1}, column ${position.column + 1}`,
+    });
+    hit.addEventListener('click', () => choose(index));
+    hit.addEventListener('focus', () => dot.classList.add('keyboard-focus'));
+    hit.addEventListener('blur', () => dot.classList.remove('keyboard-focus'));
+    hit.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        choose(index);
+      }
+    });
+    groups.dots.append(dot, highlight);
+    groups.hits.append(hit);
+  }
+}
+
+function announceTurn() {
+  if (game?.status === 'finished') return;
+  const current = playerByKey(activeKey());
+  if (!current) return;
+  announce(current.slotKey === localPlayerKey
+    ? 'Your turn. Choose a dot.'
+    : `${current.name}'s turn.`);
+}
+
+async function commit(start, end) {
+  locked = true;
+  selected = null;
+  paintSelection();
+  announce('Sending move…');
+  try {
+    const committed = await onMoveRequest(start, end, game.revision);
+    renderBoardState(committed);
+  } catch (error) {
+    console.error('Move failed:', error);
+    playSound('error');
+    announce(error?.message || 'Action failed — try again.');
+    locked = false;
+    paintSelection();
+  }
+}
+
+function choose(id) {
+  if (locked || game?.status !== 'playing') return;
+  if (localPlayerKey !== '*' && activeKey() !== localPlayerKey) {
+    playSound('error');
+    announceTurn();
+    return;
+  }
+  if (selected === null) {
+    if (!availableFrom(id).length) {
+      playSound('error');
+      announce('No available line from this dot.');
+      return;
+    }
+    playSound('tap');
+    selected = id;
+    announce('Now choose a glowing adjacent dot.');
+    paintSelection();
+    return;
+  }
+  if (id === selected) {
+    playSound('tap');
+    selected = null;
+    announceTurn();
+    paintSelection();
+    return;
+  }
+  if (lineAvailable(selected, id)) {
+    const start = selected;
+    commit(start, id);
+    return;
+  }
+  if (!availableFrom(id).length) {
+    playSound('error');
+    announce('Choose a glowing dot or another starting dot.');
+    return;
+  }
+  playSound('tap');
+  selected = id;
+  announce('Start moved. Choose a glowing adjacent dot.');
+  paintSelection();
+}
+
+export function renderBoardState(nextGame, options = {}) {
+  if (!nextGame) return;
+  if (renderedRound !== nextGame.roundId) {
+    initializeBoard({ players, localPlayerKey, game: nextGame, onMoveRequest });
+    return;
+  }
+  const shouldAnimate = options.animate !== false
+    && nextGame.revision === renderedRevision + 1
+    && nextGame.lastMove?.edgeKey
+    && !renderedEdges.has(nextGame.lastMove.edgeKey);
+  game = nextGame;
+  Object.entries(game.edges || {}).forEach(([key, owner]) => {
+    addEdge(key, owner, shouldAnimate && key === game.lastMove?.edgeKey);
+  });
+  const previousBoxCount = renderedBoxes.size;
+  Object.entries(game.boxes || {}).forEach(([key, owner]) => addBox(key, owner));
+  if (shouldAnimate && renderedBoxes.size > previousBoxCount) playSound('boxclaim');
+  renderedRevision = Number(game.revision || 0);
+  selected = null;
+  locked = false;
+  renderCards();
+  paintSelection();
+  announceTurn();
+}
+
+export function initializeBoard(options = {}) {
+  svg = document.getElementById('dots-board');
+  cards = document.getElementById('player-cards');
+  message = document.getElementById('game-message');
+  players = (options.players || []).map((player) => ({ ...player }));
+  localPlayerKey = options.localPlayerKey || null;
+  onMoveRequest = typeof options.onMoveRequest === 'function' ? options.onMoveRequest : async () => {};
+  game = options.game || null;
+  selected = null;
+  locked = false;
+  renderedRound = game?.roundId ?? null;
+  renderedRevision = Number(game?.revision || 0);
+  renderedEdges = new Set();
+  renderedBoxes = new Set();
+  buildBoard();
+  Object.entries(game?.edges || {}).forEach(([key, owner]) => addEdge(key, owner, false));
+  Object.entries(game?.boxes || {}).forEach(([key, owner]) => addBox(key, owner));
+  renderCards();
+  paintSelection();
+  announceTurn();
+}

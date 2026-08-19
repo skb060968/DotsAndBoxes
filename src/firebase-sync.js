@@ -1,4 +1,5 @@
 import { auth, authReady, db } from './firebase-config.js';
+import { applyMove, createGameState } from './game-engine.js';
 import {
   get,
   off,
@@ -179,6 +180,13 @@ export function listenRoom(roomCode, callbacks = {}) {
     }
     callbacks.onRoomSnapshot?.(room);
     callbacks.onPlayersChange?.(room.players || {}, room);
+    if (room.game) callbacks.onGameUpdate?.(room.game, room);
+    const status = room.game?.status === 'finished'
+      ? 'finished'
+      : room.game?.status === 'playing' || room.meta?.status === 'active'
+        ? 'active'
+        : room.meta?.status;
+    callbacks.onStatusChange?.(status, room);
   };
   onValue(roomRef, handler, (error) => callbacks.onError?.(error));
   return () => off(roomRef, 'value', handler);
@@ -248,4 +256,113 @@ export async function deleteRoom(roomCode) {
   await requireUser();
   await stopPresenceTracking();
   await firebaseRetry(() => remove(ref(db, roomPath(roomCode))));
+}
+
+
+export async function startGameState(roomCode) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const timestamp = now();
+  const result = await runTransaction(ref(db, roomPath(code)), (current) => {
+    if (!current || current.meta?.hostUid !== user.uid || current.meta?.status !== 'lobby' || current.game) return undefined;
+    const playerKeys = Object.keys(current.players || {})
+      .filter((key) => PLAYER_KEY_RE.test(key) && current.players[key]?.uid)
+      .sort();
+    if (playerKeys.length < 2 || playerKeys.length > 4) return undefined;
+    return {
+      ...current,
+      meta: { ...current.meta, status: 'active', lastActivity: timestamp },
+      game: createGameState(playerKeys, user.uid, timestamp),
+    };
+  }, { applyLocally: false });
+  if (!result.committed) throw new Error('Unable to start the game. Check that 2–4 players are in the lobby.');
+  return result.snapshot.val().game;
+}
+
+export async function commitGameMove(roomCode, playerIndex, expectedRevision, start, end) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const key = playerKeyFor(playerIndex);
+  if (!PLAYER_KEY_RE.test(key)) throw new Error('Invalid player slot.');
+  const result = await runTransaction(ref(db, `${roomPath(code)}/game`), (current) => {
+    if (!current || current.status !== 'playing' || current.revision !== expectedRevision) return undefined;
+    try {
+      return applyMove(current, key, start, end, user.uid, now());
+    } catch (_) {
+      return undefined;
+    }
+  }, { applyLocally: false });
+  if (!result.committed) throw new Error('Move was not committed. The turn or board changed.');
+  return result.snapshot.val();
+}
+
+export async function resetGameToLobby(roomCode) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const timestamp = now();
+  const result = await runTransaction(ref(db, roomPath(code)), (current) => {
+    if (!current || current.meta?.hostUid !== user.uid || current.game?.status !== 'finished') return undefined;
+    const next = {
+      ...current,
+      meta: { ...current.meta, status: 'lobby', lastActivity: timestamp },
+    };
+    delete next.game;
+    return next;
+  }, { applyLocally: false });
+  if (!result.committed) throw new Error('Unable to prepare a new game.');
+}
+
+
+export async function startSharedGame(roomCode) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const result = await firebaseRetry(() => runTransaction(ref(db, roomPath(code)), (current) => {
+    if (!current || current.meta?.hostUid !== user.uid || current.meta?.status !== 'lobby' || current.game) return undefined;
+    const playerKeys = Object.keys(current.players || {})
+      .filter((key) => PLAYER_KEY_RE.test(key) && current.players[key]?.uid)
+      .sort();
+    if (playerKeys.length < 2 || playerKeys.length > 4) return undefined;
+    const timestamp = now();
+    return {
+      ...current,
+      meta: { ...current.meta, status: 'active', lastActivity: timestamp },
+      game: createGameState(playerKeys, user.uid, timestamp),
+    };
+  }, { applyLocally: false }));
+  if (!result.committed) throw new Error('Unable to start the game. Check that 2–4 players are in the lobby.');
+  return result.snapshot.val().game;
+}
+
+export async function commitSharedMove(roomCode, playerIndex, expectedRevision, start, end) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const key = playerKeyFor(playerIndex);
+  if (!PLAYER_KEY_RE.test(key)) throw new Error('Invalid player slot.');
+  let moveError = null;
+  const result = await runTransaction(ref(db, `${roomPath(code)}/game`), (current) => {
+    if (!current || current.revision !== expectedRevision) return undefined;
+    try {
+      return applyMove(current, key, start, end, user.uid, now());
+    } catch (error) {
+      moveError = error;
+      return undefined;
+    }
+  }, { applyLocally: false });
+  if (!result.committed) throw moveError || new Error('The turn changed — try again.');
+  return result.snapshot.val();
+}
+
+export async function resetSharedGame(roomCode) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const result = await firebaseRetry(() => runTransaction(ref(db, roomPath(code)), (current) => {
+    if (!current || current.meta?.hostUid !== user.uid || current.game?.status !== 'finished') return undefined;
+    const next = {
+      ...current,
+      meta: { ...current.meta, status: 'lobby', lastActivity: now() },
+    };
+    delete next.game;
+    return next;
+  }, { applyLocally: false }));
+  if (!result.committed) throw new Error('Unable to prepare a new game.');
 }

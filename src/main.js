@@ -1,16 +1,20 @@
 import QRCode from 'qrcode';
-import { initializeBoard } from './board-ui.js';
+import { initializeBoard, renderBoardState } from './board-ui.js';
+import { applyMove, createGameState } from './game-engine.js';
 import { auth, authReady } from './firebase-config.js';
 import {
   createRoom,
+  commitSharedMove,
   deleteRoom,
   joinRoom,
   leavePlayer,
   listenRoom,
   normalizeRoomCode,
   removePlayer,
+  resetSharedGame,
   restoreSession,
   setupDisconnectHandler,
+  startSharedGame,
   stopPresenceTracking,
 } from './firebase-sync.js';
 import { showScreen, showToast } from './platform-ui.js';
@@ -37,6 +41,10 @@ let playerIndex = null;
 let isHost = false;
 let unsubscribeRoom = null;
 let leavingRoom = false;
+let currentGame = null;
+let displayedRound = null;
+let resultsRound = null;
+let pendingResultsRound = null;
 
 function saveSession() {
   if (roomCode && playerIndex !== null) {
@@ -121,6 +129,10 @@ function releaseRoomState() {
   playerIndex = null;
   isHost = false;
   leavingRoom = false;
+  currentGame = null;
+  displayedRound = null;
+  resultsRound = null;
+  pendingResultsRound = null;
 }
 
 function cleanupAndGoHome() {
@@ -198,10 +210,36 @@ async function setupLobby() {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, player]) => ({
           ...player,
+          slotKey: key,
           playerIndex: Number.parseInt(key.slice(7), 10),
-          boxes: 0,
+          boxes: Number(currentGame?.scores?.[key] || 0),
         }));
       renderLobbyPlayers();
+    },
+    onGameUpdate: (gameState) => {
+      currentGame = gameState;
+      if (gameState.status === 'finished') {
+        if (displayedRound === gameState.roundId) renderBoardState(gameState);
+        if (pendingResultsRound !== gameState.roundId && resultsRound !== gameState.roundId) {
+          pendingResultsRound = gameState.roundId;
+          setTimeout(() => showSharedResults(gameState), displayedRound === gameState.roundId ? 340 : 0);
+        }
+      } else {
+        enterSharedGame(gameState);
+      }
+    },
+    onStatusChange: (status, room) => {
+      if (status === 'active' && room.game) enterSharedGame(room.game);
+      if (status === 'lobby' && !leavingRoom) {
+        currentGame = null;
+        displayedRound = null;
+        resultsRound = null;
+        pendingResultsRound = null;
+        stopBackgroundMusic();
+        document.getElementById('start-game').hidden = !isHost;
+        document.getElementById('start-game').disabled = false;
+        showScreen('lobby');
+      }
     },
     onRoomDeleted: () => {
       if (!leavingRoom) showToast('The room was closed by the host.', 3000);
@@ -238,36 +276,73 @@ async function leaveCurrentRoom() {
   }
 }
 
-function handleGameComplete(result) {
+function enterSharedGame(gameState) {
+  if (!gameState || gameState.status !== 'playing') return;
+  currentGame = gameState;
+  showScreen('gameplay');
+  startBackgroundMusic();
+  document.getElementById('end-game').hidden = !isHost;
+  const localKey = `player_${playerIndex}`;
+  if (displayedRound !== gameState.roundId) {
+    displayedRound = gameState.roundId;
+    initializeBoard({
+      players,
+      localPlayerKey: localKey,
+      game: gameState,
+      onMoveRequest: (start, end, revision) => commitSharedMove(roomCode, playerIndex, revision, start, end),
+    });
+  } else {
+    renderBoardState(gameState);
+  }
+}
+
+function showSharedResults(gameState) {
+  if (!gameState || gameState.status !== 'finished') return;
+  currentGame = gameState;
+  pendingResultsRound = null;
   stopBackgroundMusic();
-  const highest = Math.max(...result.winners.map((winner) => winner.boxes));
-  const names = result.winners.map((winner) => winner.name);
+  const winners = players.filter((player) => gameState.winnerKeys?.[player.slotKey]);
+  const highest = Math.max(...players.map((player) => Number(gameState.scores?.[player.slotKey] || 0)));
+  const names = winners.map((winner) => winner.name);
   document.getElementById('result-summary').textContent = names.length === 1
     ? `${names[0]} wins with ${highest} boxes!`
     : `${names.join(' and ')} tie with ${highest} boxes!`;
-  playSound('win');
+  const playAgain = document.getElementById('play-again');
+  playAgain.hidden = !isHost;
+  playAgain.disabled = false;
+  playAgain.textContent = 'New Game';
+  if (resultsRound !== gameState.roundId) {
+    resultsRound = gameState.roundId;
+    playSound('win');
+  }
   showScreen('results');
 }
 
-function startGame() {
+async function startGame() {
   if (!isHost) return;
   if (players.length < 2) {
     playSound('error');
     showToast('At least 2 players are needed.');
     return;
   }
-  showScreen('gameplay');
-  startBackgroundMusic();
-  document.getElementById('end-game').hidden = false;
-  initializeBoard({ players, onComplete: handleGameComplete });
+  const button = document.getElementById('start-game');
+  button.disabled = true;
+  try {
+    await startSharedGame(roomCode);
+  } catch (error) {
+    console.error('Start game failed:', error);
+    playSound('error');
+    showToast(error?.message || 'Action failed — try again.');
+    button.disabled = false;
+  }
 }
 
 function previewPlayers() {
   return [
-    { name: 'You', avatar: '🦊', color: '#2563eb' },
-    { name: 'Maya', avatar: '🐼', color: '#db2777' },
-    { name: 'Leo', avatar: '🦁', color: '#16a34a' },
-    { name: 'Nova', avatar: '🦄', color: '#eab308' },
+    { slotKey: 'player_0', name: 'You', avatar: '🦊', color: '#2563eb' },
+    { slotKey: 'player_1', name: 'Maya', avatar: '🐼', color: '#db2777' },
+    { slotKey: 'player_2', name: 'Leo', avatar: '🦁', color: '#16a34a' },
+    { slotKey: 'player_3', name: 'Nova', avatar: '🦄', color: '#eab308' },
   ];
 }
 
@@ -431,7 +506,18 @@ function wire() {
     event.currentTarget.disabled = true;
     await leaveCurrentRoom();
   };
-  document.getElementById('play-again').onclick = startGame;
+  document.getElementById('play-again').onclick = async (event) => {
+    if (!isHost) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await resetSharedGame(roomCode);
+    } catch (error) {
+      console.error('New game reset failed:', error);
+      showToast('Action failed — try again.');
+      button.disabled = false;
+    }
+  };
   document.getElementById('end-game').onclick = async () => {
     if (!isHost || !confirm('End this game for everyone?')) return;
     await leaveCurrentRoom();
@@ -524,10 +610,20 @@ async function init() {
   if (params.get('preview') === 'gameplay') {
     isHost = true;
     players = previewPlayers();
+    let previewGame = createGameState(players.map((player) => player.slotKey), 'preview');
     showScreen('gameplay');
     startBackgroundMusic();
     document.getElementById('end-game').hidden = false;
-    initializeBoard({ players, onComplete: handleGameComplete });
+    initializeBoard({
+      players,
+      localPlayerKey: '*',
+      game: previewGame,
+      onMoveRequest: async (start, end) => {
+        const activePreviewKey = previewGame.playerOrder[previewGame.currentPlayerIndex];
+        previewGame = applyMove(previewGame, activePreviewKey, start, end, 'preview');
+        return previewGame;
+      },
+    });
     return;
   }
 
