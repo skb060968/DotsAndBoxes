@@ -296,6 +296,35 @@ function enterSharedGame(gameState) {
   }
 }
 
+function renderResultStandings(gameState) {
+  const list = document.getElementById('result-standings');
+  if (!list) return;
+  list.replaceChildren();
+  const ranked = players
+    .map((player) => ({ ...player, boxes: Number(gameState.scores?.[player.slotKey] || 0) }))
+    .sort((a, b) => b.boxes - a.boxes);
+  ranked.forEach((player, index) => {
+    const isWinner = Boolean(gameState.winnerKeys?.[player.slotKey]);
+    const item = document.createElement('li');
+    item.className = `standing${isWinner ? ' winner' : ''}`;
+    item.style.setProperty('--player', player.color);
+    const rank = document.createElement('span');
+    rank.className = 'standing-rank';
+    rank.textContent = isWinner ? '🏆' : `#${index + 1}`;
+    const avatar = document.createElement('span');
+    avatar.className = 'standing-avatar';
+    avatar.textContent = player.avatar;
+    const name = document.createElement('span');
+    name.className = 'standing-name';
+    name.textContent = player.name;
+    const score = document.createElement('span');
+    score.className = 'standing-score';
+    score.textContent = `${player.boxes} box${player.boxes === 1 ? '' : 'es'}`;
+    item.append(rank, avatar, name, score);
+    list.append(item);
+  });
+}
+
 function showSharedResults(gameState) {
   if (!gameState || gameState.status !== 'finished') return;
   currentGame = gameState;
@@ -307,6 +336,7 @@ function showSharedResults(gameState) {
   document.getElementById('result-summary').textContent = names.length === 1
     ? `${names[0]} wins with ${highest} boxes!`
     : `${names.join(' and ')} tie with ${highest} boxes!`;
+  renderResultStandings(gameState);
   const playAgain = document.getElementById('play-again');
   playAgain.hidden = !isHost;
   playAgain.disabled = false;

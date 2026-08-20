@@ -130,7 +130,7 @@ function addEdge(moveKey, ownerKey, animate = false, animationStart = null, anim
 function buildBoard() {
   svg.replaceChildren();
   const defs = svgElement('defs');
-  defs.innerHTML = '<radialGradient id="dot-gradient" cx="28%" cy="20%" r="74%"><stop offset="0" stop-color="#f8fafc"/><stop offset=".12" stop-color="#94a3b8"/><stop offset=".34" stop-color="#485564"/><stop offset=".68" stop-color="#1b2530"/><stop offset="1" stop-color="#070b10"/></radialGradient><filter id="peg-shadow" x="-60%" y="-60%" width="240%" height="240%"><feDropShadow dx=".8" dy="1.15" stdDeviation=".72" flood-color="#2b1a0d" flood-opacity=".62"/></filter>';
+  defs.innerHTML = '<radialGradient id="dot-gradient" cx="28%" cy="20%" r="74%"><stop offset="0" stop-color="#fffdf5"/><stop offset=".14" stop-color="#ffe9a6"/><stop offset=".4" stop-color="#e6ac2e"/><stop offset=".72" stop-color="#9a6a12"/><stop offset="1" stop-color="#513608"/></radialGradient><filter id="peg-shadow" x="-60%" y="-60%" width="240%" height="240%"><feDropShadow dx=".8" dy="1.15" stdDeviation=".72" flood-color="#2b1a0d" flood-opacity=".62"/></filter>';
   svg.append(defs);
   groups.guides = svgElement('g', { class: 'guide-grid', 'aria-hidden': 'true' });
   groups.boxes = svgElement('g');
