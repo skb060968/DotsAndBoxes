@@ -5,7 +5,7 @@
   --ink: #14213d;
   --paper: #fffdf7;
   --accent: #fbbf24;
-  --edge: #d4a11e;
+  --edge: #8a5a2b;
   --safe-top: max(12px, env(safe-area-inset-top));
   --safe-bottom: max(12px, env(safe-area-inset-bottom));
 }
@@ -470,10 +470,10 @@ legend {
   pointer-events: none;
 }
 .edge-rod-highlight {
-  stroke: #fff0c2;
+  stroke: #f0dcbf;
   stroke-width: 0.72;
   stroke-linecap: round;
-  stroke-opacity: 0.8;
+  stroke-opacity: 0.7;
   pointer-events: none;
 }
 .edge.temp {
