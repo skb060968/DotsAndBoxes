@@ -183,6 +183,10 @@ h2 {
   letter-spacing: 0.2em;
   font-weight: 800;
 }
+#join-code::placeholder {
+  color: #dfe3ea;
+  opacity: 1;
+}
 fieldset {
   border: 0;
   padding: 0;
