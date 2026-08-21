@@ -282,30 +282,23 @@ async function leaveCurrentRoom() {
  * until the first interaction forces a reflow. Nudging a relayout across a few
  * frames (and shortly after) makes it settle immediately, like phones do.
  */
-function syncViewportHeight() {
-  const height = window.visualViewport?.height || window.innerHeight;
-  if (height) document.documentElement.style.setProperty('--app-vh', `${Math.round(height)}px`);
-}
-
 /**
- * iPad Safari lays out and paints the gameplay screen before the viewport
- * settles, leaving the player cards, outer dot rows and controls unpainted
- * until a touch forces a repaint. We first correct the height from the real
- * viewport, then force a compositing repaint (an invisible transform toggle) so
- * the whole screen paints immediately without needing a tap.
+ * iPad Safari paints the gameplay screen before it settles, leaving the player
+ * cards, outer dot rows and controls unpainted until a touch forces a repaint.
+ * Toggling a compositing property (an invisible transform) at a few settle
+ * points forces the whole screen to paint immediately, without needing a tap.
  */
 function refitGameScreen() {
   const el = document.getElementById('gameplay');
   if (!el) return;
   const repaint = () => {
     if (el.hidden) return;
-    syncViewportHeight();
     void el.offsetHeight;
     el.style.transform = 'translateZ(0)';
     void el.offsetHeight;
     el.style.transform = '';
   };
-  requestAnimationFrame(() => { syncViewportHeight(); requestAnimationFrame(repaint); });
+  requestAnimationFrame(() => requestAnimationFrame(repaint));
   [120, 300, 600].forEach((delay) => setTimeout(repaint, delay));
 }
 
@@ -672,10 +665,6 @@ function registerServiceWorker() {
 }
 
 async function init() {
-  syncViewportHeight();
-  window.addEventListener('resize', syncViewportHeight);
-  window.addEventListener('orientationchange', () => setTimeout(syncViewportHeight, 120));
-  window.visualViewport?.addEventListener('resize', syncViewportHeight);
   buildPickers();
   wire();
   registerServiceWorker();
