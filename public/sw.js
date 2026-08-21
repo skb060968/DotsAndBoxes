@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dots-and-boxes-v35';
+const CACHE_NAME = 'dots-and-boxes-v36';
 const SHELL = [
   '/', '/index.html', '/manifest.json',
   '/icons/icon-192.png', '/icons/icon-512.png',

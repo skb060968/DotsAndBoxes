@@ -287,15 +287,26 @@ function syncViewportHeight() {
   if (height) document.documentElement.style.setProperty('--app-vh', `${Math.round(height)}px`);
 }
 
+/**
+ * iPad Safari lays out and paints the gameplay screen before the viewport
+ * settles, leaving the player cards, outer dot rows and controls unpainted
+ * until a touch forces a repaint. We first correct the height from the real
+ * viewport, then force a compositing repaint (an invisible transform toggle) so
+ * the whole screen paints immediately without needing a tap.
+ */
 function refitGameScreen() {
   const el = document.getElementById('gameplay');
   if (!el) return;
-  const nudge = () => {
+  const repaint = () => {
+    if (el.hidden) return;
     syncViewportHeight();
-    if (!el.hidden) void el.offsetHeight;
+    void el.offsetHeight;
+    el.style.transform = 'translateZ(0)';
+    void el.offsetHeight;
+    el.style.transform = '';
   };
-  requestAnimationFrame(() => { nudge(); requestAnimationFrame(nudge); });
-  [120, 300, 600].forEach((delay) => setTimeout(nudge, delay));
+  requestAnimationFrame(() => { syncViewportHeight(); requestAnimationFrame(repaint); });
+  [120, 300, 600].forEach((delay) => setTimeout(repaint, delay));
 }
 
 function enterSharedGame(gameState) {
