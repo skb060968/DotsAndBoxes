@@ -634,6 +634,30 @@ dialog {
 dialog::backdrop {
   background: #14213dbb;
 }
+.confirm-dialog {
+  width: min(90vw, 320px);
+  color: var(--ink);
+  background: #fff;
+}
+.confirm-message {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.confirm-actions .button {
+  flex: 1;
+  min-width: 0;
+}
+.confirm-actions .quiet {
+  color: var(--ink);
+  border-color: #b8c6d6;
+  text-shadow: none;
+}
 dialog img {
   display: block;
   margin: 14px auto;

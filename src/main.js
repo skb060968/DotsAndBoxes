@@ -17,7 +17,7 @@ import {
   startSharedGame,
   stopPresenceTracking,
 } from './firebase-sync.js';
-import { showScreen, showToast } from './platform-ui.js';
+import { showConfirm, showScreen, showToast } from './platform-ui.js';
 import {
   isMuted,
   playSound,
@@ -276,10 +276,31 @@ async function leaveCurrentRoom() {
   }
 }
 
+/**
+ * iPad/iOS Safari can lay out the gameplay screen before the viewport settles,
+ * so the fixed-height (svh) grid overflows and hides the player cards/controls
+ * until the first interaction forces a reflow. Nudging a relayout across a few
+ * frames (and shortly after) makes it settle immediately, like phones do.
+ */
+function refitGameScreen() {
+  const el = document.getElementById('gameplay');
+  if (!el) return;
+  const nudge = () => {
+    if (el.hidden) return;
+    void el.offsetHeight;
+    window.dispatchEvent(new Event('resize'));
+  };
+  requestAnimationFrame(() => { nudge(); requestAnimationFrame(nudge); });
+  setTimeout(nudge, 140);
+  setTimeout(nudge, 320);
+}
+
 function enterSharedGame(gameState) {
   if (!gameState || gameState.status !== 'playing') return;
   currentGame = gameState;
+  const wasHidden = document.getElementById('gameplay')?.hidden !== false;
   showScreen('gameplay');
+  if (wasHidden) refitGameScreen();
   startBackgroundMusic();
   document.getElementById('end-game').hidden = !isHost;
   const localKey = `player_${playerIndex}`;
@@ -549,7 +570,12 @@ function wire() {
     }
   };
   document.getElementById('end-game').onclick = async () => {
-    if (!isHost || !confirm('End this game for everyone?')) return;
+    if (!isHost) return;
+    const confirmed = await showConfirm('End this game for everyone?', {
+      confirmText: 'End game',
+      cancelText: 'Keep playing',
+    });
+    if (!confirmed) return;
     await leaveCurrentRoom();
   };
   wireShare();
@@ -642,6 +668,7 @@ async function init() {
     players = previewPlayers();
     let previewGame = createGameState(players.map((player) => player.slotKey), 'preview');
     showScreen('gameplay');
+    refitGameScreen();
     startBackgroundMusic();
     document.getElementById('end-game').hidden = false;
     initializeBoard({
