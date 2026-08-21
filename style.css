@@ -629,6 +629,8 @@ dialog {
   border-radius: 18px;
   padding: 22px;
   text-align: center;
+  color: var(--ink);
+  background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%);
   box-shadow: 0 20px 60px #14213d66;
 }
 dialog::backdrop {
@@ -637,7 +639,8 @@ dialog::backdrop {
 .confirm-dialog {
   width: min(90vw, 320px);
   color: var(--ink);
-  background: #fff;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 52%, #fdf2f8 100%);
+  border: 1px solid #e9d5ff;
 }
 .confirm-message {
   margin: 0 0 16px;
