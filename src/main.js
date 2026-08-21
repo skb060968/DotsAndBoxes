@@ -282,17 +282,20 @@ async function leaveCurrentRoom() {
  * until the first interaction forces a reflow. Nudging a relayout across a few
  * frames (and shortly after) makes it settle immediately, like phones do.
  */
+function syncViewportHeight() {
+  const height = window.visualViewport?.height || window.innerHeight;
+  if (height) document.documentElement.style.setProperty('--app-vh', `${Math.round(height)}px`);
+}
+
 function refitGameScreen() {
   const el = document.getElementById('gameplay');
   if (!el) return;
   const nudge = () => {
-    if (el.hidden) return;
-    void el.offsetHeight;
-    window.dispatchEvent(new Event('resize'));
+    syncViewportHeight();
+    if (!el.hidden) void el.offsetHeight;
   };
   requestAnimationFrame(() => { nudge(); requestAnimationFrame(nudge); });
-  setTimeout(nudge, 140);
-  setTimeout(nudge, 320);
+  [120, 300, 600].forEach((delay) => setTimeout(nudge, delay));
 }
 
 function enterSharedGame(gameState) {
@@ -658,6 +661,10 @@ function registerServiceWorker() {
 }
 
 async function init() {
+  syncViewportHeight();
+  window.addEventListener('resize', syncViewportHeight);
+  window.addEventListener('orientationchange', () => setTimeout(syncViewportHeight, 120));
+  window.visualViewport?.addEventListener('resize', syncViewportHeight);
   buildPickers();
   wire();
   registerServiceWorker();

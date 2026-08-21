@@ -29,7 +29,7 @@ input {
 }
 .app {
   width: min(100%, 560px);
-  min-height: calc(100svh - var(--safe-top) - var(--safe-bottom));
+  min-height: calc(var(--app-vh, 100svh) - var(--safe-top) - var(--safe-bottom));
   margin: auto;
   display: grid;
   place-items: center;
@@ -352,7 +352,7 @@ legend {
   width: 100%;
 }
 .game {
-  height: calc(100svh - var(--safe-top) - var(--safe-bottom));
+  height: calc(var(--app-vh, 100svh) - var(--safe-top) - var(--safe-bottom));
   min-height: 0;
   overflow: hidden;
   display: grid;
