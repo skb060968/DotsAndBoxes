@@ -614,6 +614,26 @@ legend {
 .voice-mute[hidden] {
   display: none !important;
 }
+.player-card {
+  position: relative;
+}
+.player-card .speaker-indicator {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.player-card.speaking .speaker-indicator {
+  opacity: 1;
+  animation: speaker-glow 1s ease-in-out infinite;
+}
+@keyframes speaker-glow {
+  50% {
+    filter: drop-shadow(0 0 4px #4ade80);
+  }
+}
 .result-mark {
   font-size: 5rem;
 }

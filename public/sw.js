@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dots-and-boxes-v38';
+const CACHE_NAME = 'dots-and-boxes-v39';
 const SHELL = [
   '/', '/index.html', '/manifest.json',
   '/icons/icon-192.png', '/icons/icon-512.png',
@@ -22,6 +22,7 @@ async function networkFirst(request, navigation = false) {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
   const navigation = event.request.mode === 'navigate';
   const asset = /\.(?:js|css|png|mp3|json)$/.test(url.pathname) || url.pathname.startsWith('/assets/');
   if (navigation || asset) event.respondWith(networkFirst(event.request, navigation));

@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { initializeBoard, renderBoardState } from './board-ui.js';
+import { initializeBoard, renderBoardState, setActiveSpeakers } from './board-ui.js';
 import { applyMove, createGameState } from './game-engine.js';
 import { auth, authReady } from './firebase-config.js';
 import {
@@ -18,7 +18,7 @@ import {
   stopPresenceTracking,
 } from './firebase-sync.js';
 import { showConfirm, showScreen, showToast } from './platform-ui.js';
-import { createVoiceChat } from './voice-chat.js';
+import { createLiveKitVoice } from './voice-livekit.js';
 import {
   isMuted,
   playSound,
@@ -177,15 +177,21 @@ function updateVoiceUI(status) {
 
 function ensureVoiceChat() {
   if (voiceChat || !roomCode || playerIndex === null) return voiceChat;
-  voiceChat = createVoiceChat({
+  voiceChat = createLiveKitVoice({
+    game: 'dots',
     roomCode,
-    playerKey: `player_${playerIndex}`,
-    uid: auth.currentUser?.uid,
+    identity: `player_${playerIndex}`,
+    displayName: players.find((player) => player.playerIndex === playerIndex)?.name || `Player ${playerIndex + 1}`,
+    getIdToken: async () => {
+      const user = await authReady;
+      return user.getIdToken();
+    },
     onStatus: (status) => {
       updateVoiceUI(status);
-      if (status.state === 'full') showToast('Voice is full (2 players).');
-      else if (status.state === 'error' && status.message) showToast(status.message);
+      if (status.state === 'error' && status.message) showToast(status.message);
+      else if (status.state === 'needs-audio-unlock') showToast('Tap 🎤 to enable voice audio', 3000);
     },
+    onSpeakers: (identities) => setActiveSpeakers(identities),
   });
   return voiceChat;
 }

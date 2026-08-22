@@ -65,12 +65,29 @@ function renderCards() {
     const score = Number(game?.scores?.[player.slotKey] || 0);
     const card = document.createElement('article');
     card.className = `player-card${game?.status === 'playing' && player.slotKey === currentKey ? ' active' : ''}`;
+    if (player.slotKey) card.dataset.slot = player.slotKey;
     card.style.setProperty('--player', player.color);
-    card.innerHTML = '<span class="player-avatar" aria-hidden="true"></span><span class="player-name"></span><span class="player-score"></span>';
+    card.innerHTML = '<span class="player-avatar" aria-hidden="true"></span><span class="player-name"></span><span class="player-score"></span><span class="speaker-indicator" aria-hidden="true">🎙️</span>';
     card.querySelector('.player-avatar').textContent = player.avatar;
     card.querySelector('.player-name').textContent = player.name;
     card.querySelector('.player-score').textContent = `${score} box${score === 1 ? '' : 'es'}`;
     cards.append(card);
+  });
+  if (typeof window !== 'undefined' && window._dotsActiveSpeakers) {
+    setActiveSpeakers(window._dotsActiveSpeakers);
+  }
+}
+
+/**
+ * Adds a glowing mic to the player cards whose slots are currently speaking.
+ * Keyed by slot (player_0..3). Safe to call anytime; re-applied after renders.
+ * @param {string[]} slotKeys
+ */
+export function setActiveSpeakers(slotKeys = []) {
+  const active = new Set(slotKeys);
+  if (typeof window !== 'undefined') window._dotsActiveSpeakers = slotKeys;
+  document.querySelectorAll('#player-cards .player-card').forEach((card) => {
+    card.classList.toggle('speaking', active.has(card.dataset.slot));
   });
 }
 
