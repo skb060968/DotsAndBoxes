@@ -18,6 +18,7 @@ import {
   stopPresenceTracking,
 } from './firebase-sync.js';
 import { showConfirm, showScreen, showToast } from './platform-ui.js';
+import { createVoiceChat } from './voice-chat.js';
 import {
   isMuted,
   playSound,
@@ -45,6 +46,8 @@ let currentGame = null;
 let displayedRound = null;
 let resultsRound = null;
 let pendingResultsRound = null;
+let voiceChat = null;
+let voiceBusy = false;
 
 function saveSession() {
   if (roomCode && playerIndex !== null) {
@@ -120,6 +123,7 @@ function validName(id) {
 
 function releaseRoomState() {
   stopBackgroundMusic();
+  stopVoiceChat();
   unsubscribeRoom?.();
   unsubscribeRoom = null;
   stopPresenceTracking().catch(() => {});
@@ -138,6 +142,78 @@ function releaseRoomState() {
 function cleanupAndGoHome() {
   releaseRoomState();
   showScreen('home');
+}
+
+/* ======= VOICE CHAT (optional, STUN-only, max 2) ======= */
+
+function updateVoiceUI(status) {
+  const toggle = document.getElementById('voice-toggle');
+  const muteBtn = document.getElementById('voice-mute');
+  if (!toggle || !muteBtn) return;
+  const state = status?.state || 'idle';
+  const joined = Boolean(status?.joined);
+
+  toggle.setAttribute('aria-pressed', String(joined));
+  toggle.classList.toggle('active', joined);
+  muteBtn.hidden = !joined;
+
+  if (!joined) {
+    toggle.textContent = '🎙️ Join voice';
+  } else if (state === 'connected') {
+    toggle.textContent = '🎧 Voice on';
+  } else if (state === 'waiting') {
+    toggle.textContent = '🎙️ Waiting…';
+  } else if (state === 'connecting') {
+    toggle.textContent = '🎙️ Connecting…';
+  } else {
+    toggle.textContent = '🎙️ Voice';
+  }
+
+  const muted = Boolean(status?.muted);
+  muteBtn.textContent = muted ? '🔇' : '🎤';
+  muteBtn.setAttribute('aria-label', muted ? 'Unmute microphone' : 'Mute microphone');
+  muteBtn.classList.toggle('muted', muted);
+}
+
+function ensureVoiceChat() {
+  if (voiceChat || !roomCode || playerIndex === null) return voiceChat;
+  voiceChat = createVoiceChat({
+    roomCode,
+    playerKey: `player_${playerIndex}`,
+    uid: auth.currentUser?.uid,
+    onStatus: (status) => {
+      updateVoiceUI(status);
+      if (status.state === 'full') showToast('Voice is full (2 players).');
+      else if (status.state === 'error' && status.message) showToast(status.message);
+    },
+  });
+  return voiceChat;
+}
+
+async function handleVoiceToggle() {
+  if (voiceBusy) return;
+  voiceBusy = true;
+  const toggle = document.getElementById('voice-toggle');
+  if (toggle) toggle.disabled = true;
+  try {
+    const chat = ensureVoiceChat();
+    if (!chat) return;
+    if (chat.isJoined()) await chat.leave();
+    else await chat.join();
+  } catch (error) {
+    console.error('Voice toggle failed:', error);
+    showToast('Voice unavailable — try again.');
+  } finally {
+    voiceBusy = false;
+    if (toggle) toggle.disabled = false;
+  }
+}
+
+function stopVoiceChat() {
+  if (!voiceChat) return;
+  try { voiceChat.destroy(); } catch (_) {}
+  voiceChat = null;
+  updateVoiceUI({ state: 'idle', joined: false, muted: false });
 }
 
 function renderLobbyPlayers() {
@@ -584,6 +660,10 @@ function wire() {
     });
     if (!confirmed) return;
     await leaveCurrentRoom();
+  };
+  document.getElementById('voice-toggle').onclick = handleVoiceToggle;
+  document.getElementById('voice-mute').onclick = () => {
+    if (voiceChat?.isJoined()) voiceChat.toggleMute();
   };
   wireShare();
   wireMute();

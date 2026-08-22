@@ -578,6 +578,42 @@ legend {
   font-weight: 900;
   cursor: pointer;
 }
+.voice-toggle {
+  margin-left: 8px;
+  border: 0;
+  border-radius: 999px;
+  padding: clamp(4px, 0.7svh, 7px) clamp(9px, 2.4vw, 14px);
+  background: #fff;
+  color: #14213d;
+  font-size: clamp(0.7rem, 1.7svh, 0.95rem);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 6px #14213d22;
+}
+.voice-toggle.active {
+  background: #16a34a;
+  color: #fff;
+}
+.voice-mute {
+  margin-left: 6px;
+  width: clamp(30px, 4.8svh, 34px);
+  height: clamp(30px, 4.8svh, 34px);
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #14213d;
+  font-size: clamp(1rem, 2.4svh, 1.2rem);
+  cursor: pointer;
+  box-shadow: 0 2px 6px #14213d22;
+}
+.voice-mute.muted {
+  background: #f59e0b;
+  color: #451a03;
+}
+.voice-toggle[hidden],
+.voice-mute[hidden] {
+  display: none !important;
+}
 .result-mark {
   font-size: 5rem;
 }
