@@ -177,29 +177,16 @@
           Choose a dot to begin.
         </p>
         <div class="game-controls">
-          <label class="mute"
-            ><input id="mute" type="checkbox" /><span
-              id="mute-icon"
-              aria-hidden="true"
-              >🔊</span
-            ><span>Mute</span></label
-          ><button
-            id="voice-toggle"
-            class="voice-toggle"
+          <button
+            id="mute"
+            class="mute"
             type="button"
+            aria-label="Mute game sound"
             aria-pressed="false"
-          >
-            🎙️ Join voice
-          </button
-          ><button
-            id="voice-mute"
-            class="voice-mute"
-            type="button"
-            aria-label="Mute microphone"
-            hidden
           >
             🔊
           </button
+          ><div id="voice-widget"></div
           ><button
             id="end-game"
             class="end-game"
