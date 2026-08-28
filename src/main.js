@@ -48,6 +48,12 @@ let resultsRound = null;
 let pendingResultsRound = null;
 let voiceWidget = null;
 
+/* Lobby presence: a dropped player lingers briefly with the OFFLINE treatment,
+   then is pruned from the list (the host and the local player are never hidden). */
+const LOBBY_PRUNE_DELAY_MS = 2500;
+let disconnectedSince = {};
+let lobbyPruneTimer = null;
+
 function saveSession() {
   if (roomCode && playerIndex !== null) {
     try { localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerIndex })); } catch (_) {}
@@ -162,10 +168,48 @@ function mountVoice() {
   });
 }
 
+/** Players that count toward the roster — connected ones only (Start gate). */
+function connectedLobbyPlayers() {
+  return players.filter((player) => player.connected !== false);
+}
+
+/** Whether a player should still appear in the lobby list. Connected players,
+    the host, and the local player always show; a dropped player lingers with
+    the OFFLINE treatment for a short window and is then pruned. */
+function isVisibleInLobby(player) {
+  if (player.connected !== false) return true;
+  if (player.playerIndex === 0 || player.playerIndex === playerIndex) return true;
+  const since = disconnectedSince[player.slotKey];
+  return typeof since === 'number' && Date.now() - since < LOBBY_PRUNE_DELAY_MS;
+}
+
+/** Track when each player first went offline so the list can prune them inside
+    the linger window while still showing the state change first. */
+function trackDisconnections() {
+  const stamp = Date.now();
+  const next = {};
+  let pruneNeeded = false;
+  players.forEach((player) => {
+    if (player.connected === false) {
+      next[player.slotKey] = disconnectedSince[player.slotKey] || stamp;
+      const prunable = player.playerIndex !== 0 && player.playerIndex !== playerIndex;
+      if (prunable && stamp - next[player.slotKey] < LOBBY_PRUNE_DELAY_MS) pruneNeeded = true;
+    }
+  });
+  disconnectedSince = next;
+  if (!pruneNeeded || lobbyPruneTimer !== null) return;
+  lobbyPruneTimer = setTimeout(() => {
+    lobbyPruneTimer = null;
+    renderLobbyPlayers();
+  }, LOBBY_PRUNE_DELAY_MS);
+}
+
 function renderLobbyPlayers() {
   const list = document.getElementById('lobby-players');
   list.replaceChildren();
-  players.forEach((player) => {
+  const startBtn = document.getElementById('start-game');
+  if (startBtn && isHost) startBtn.disabled = connectedLobbyPlayers().length < 2;
+  players.filter(isVisibleInLobby).forEach((player) => {
     const item = document.createElement('li');
     item.classList.toggle('offline', player.connected === false);
     item.style.setProperty('--player', player.color);
@@ -236,6 +280,7 @@ async function setupLobby() {
           playerIndex: Number.parseInt(key.slice(7), 10),
           boxes: Number(currentGame?.scores?.[key] || 0),
         }));
+      trackDisconnections();
       renderLobbyPlayers();
     },
     onGameUpdate: (gameState) => {
@@ -401,9 +446,9 @@ function showSharedResults(gameState) {
 
 async function startGame() {
   if (!isHost) return;
-  if (players.length < 2) {
+  if (connectedLobbyPlayers().length < 2) {
     playSound('error');
-    showToast('At least 2 players are needed.');
+    showToast('At least 2 connected players are needed.');
     return;
   }
   const button = document.getElementById('start-game');

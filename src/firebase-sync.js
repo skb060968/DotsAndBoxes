@@ -319,7 +319,8 @@ export async function startSharedGame(roomCode) {
   const result = await firebaseRetry(() => runTransaction(ref(db, roomPath(code)), (current) => {
     if (!current || current.meta?.hostUid !== user.uid || current.meta?.status !== 'lobby' || current.game) return undefined;
     const playerKeys = Object.keys(current.players || {})
-      .filter((key) => PLAYER_KEY_RE.test(key) && current.players[key]?.uid)
+      .filter((key) => PLAYER_KEY_RE.test(key) && current.players[key]?.uid
+        && current.players[key]?.connected !== false)
       .sort();
     if (playerKeys.length < 2 || playerKeys.length > 4) return undefined;
     const timestamp = now();
