@@ -570,6 +570,7 @@ function wire() {
     startJoinPreview(normalized);
   });
   document.getElementById('home-host').onclick = () => showScreen('create-room');
+  document.getElementById('home-help').onclick = () => showScreen('how-to');
   document.getElementById('home-join').onclick = () => {
     stopJoinPreview();
     showScreen('join-room');

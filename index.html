@@ -59,8 +59,24 @@
           <button id="home-host" class="button primary">HOST</button
           ><button id="home-join" class="button secondary">
             Join as Player
-          </button>
+          </button
+          ><button id="home-help" class="button secondary">How to Play</button>
         </div>
+      </section>
+      <section
+        id="how-to"
+        class="screen setup"
+        tabindex="-1"
+        aria-labelledby="how-to-title"
+      >
+        <h2 id="how-to-title">How to Play</h2>
+        <ol class="how-to-list">
+          <li class="how-to-item"><span class="how-to-icon">🎯</span><p><strong>Create or join</strong> a room with a room code and pick your colour. 2–4 players.</p></li>
+          <li class="how-to-item"><span class="how-to-icon">➖</span><p><strong>On your turn,</strong> draw one line between two neighbouring dots.</p></li>
+          <li class="how-to-item"><span class="how-to-icon">🟦</span><p><strong>Close the 4th side of a box</strong> to claim it in your colour — then take another turn.</p></li>
+          <li class="how-to-item"><span class="how-to-icon">🏆</span><p>When every box is claimed, <strong>the most boxes wins.</strong></p></li>
+        </ol>
+        <button class="button quiet" data-home type="button">← Back</button>
       </section>
       <section
         id="create-room"
