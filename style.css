@@ -239,6 +239,11 @@ legend {
 /* Avatar tiles — STANDARD glass-tile look (see checklist). Applies to the avatar
    picks only; .color-pick keeps its own round glossy swatch styling. */
 .pick:not(.color-pick) {
+  /* .pick inherits a small font (clamp .. 1.45rem) sized for the old 6-column grid.
+     In the 4-column avatar grid each tile is ~59px, so scale the emoji up to keep the
+     same glyph-to-tile ratio as every other game (~0.55). */
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.35);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.08) 55%, rgba(0, 0, 0, 0.14));
