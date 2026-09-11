@@ -209,6 +209,12 @@ legend {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(4px, 1.5vw, 8px);
 }
+/* 8 avatars → 4 x 2 (matches every other game). The colour picker keeps 6 in a row. */
+.avatar-picker {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 260px;
+  margin: 0 auto;
+}
 .pick {
   width: 100%;
   min-width: 0;
