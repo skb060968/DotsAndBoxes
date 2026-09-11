@@ -18,6 +18,7 @@ import {
   stopPresenceTracking,
 } from './firebase-sync.js';
 import { showConfirm, showScreen, showToast } from './platform-ui.js';
+import { maybeShowAppBanner } from './install-banner.js';
 import { mountVoiceChat } from './voice-chat-widget.js';
 import {
   isMuted,
@@ -27,7 +28,7 @@ import {
   stopBackgroundMusic,
 } from './sound-manager.js';
 
-const AVATARS = ['🦊', '🐼', '🐸', '🦁', '🐙', '🦄'];
+const AVATARS = ['🥷', '🧙', '🦸', '👷', '🤴', '👸', '🧝', '🧛'];
 const COLORS = [
   ['Ocean', '#2563eb'], ['Berry', '#db2777'], ['Leaf', '#16a34a'],
   ['Sun', '#eab308'], ['Grape', '#7c3aed'], ['Coral', '#ea580c'],
@@ -801,6 +802,9 @@ async function init() {
     input.value = linkedRoom;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     showScreen('join-room');
+    // Arrived via a shared room link in a browser tab → offer the app (same as the
+    // other games). Chrome's own install dialog is suppressed in install-banner.js.
+    maybeShowAppBanner();
   } else {
     showScreen('home');
   }

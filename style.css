@@ -1,3 +1,5 @@
+@import './src/app-banner.css';
+
 :root {
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
   color: #14213d;
@@ -227,6 +229,35 @@ legend {
   box-shadow: 0 0 0 3px #fbbf24;
   transform: translateY(-2px);
 }
+
+/* Avatar tiles — STANDARD glass-tile look (see checklist). Applies to the avatar
+   picks only; .color-pick keeps its own round glossy swatch styling. */
+.pick:not(.color-pick) {
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.08) 55%, rgba(0, 0, 0, 0.14));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.18),
+    0 3px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.12s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.pick:not(.color-pick)[aria-pressed="true"] {
+  border-color: #fbbf24;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.38), rgba(251, 191, 36, 0.12));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 3px #fbbf24,
+    0 0 14px rgba(251, 191, 36, 0.6);
+  transform: translateY(-2px) scale(1.06);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(.color-pick):hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.16));
+    transform: translateY(-1px);
+  }
+}
+.pick:not(.color-pick):active { transform: scale(0.94); }
 .pick:focus {
   outline: none;
 }
