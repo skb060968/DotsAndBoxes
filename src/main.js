@@ -1,3 +1,8 @@
+// On-device diagnostics: records failures to localStorage and adds a 5-tap
+// viewer with a Copy button. Import-only integration; must come first so
+// startup errors are captured too.
+import './diagnostics.js';
+
 import QRCode from 'qrcode';
 import { initializeBoard, renderBoardState, setActiveSpeakers } from './board-ui.js';
 import { applyMove, createGameState } from './game-engine.js';
