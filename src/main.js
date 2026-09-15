@@ -471,10 +471,10 @@ async function startGame() {
 
 function previewPlayers() {
   return [
-    { slotKey: 'player_0', name: 'You', avatar: '🦊', color: '#2563eb' },
-    { slotKey: 'player_1', name: 'Maya', avatar: '🐼', color: '#db2777' },
-    { slotKey: 'player_2', name: 'Leo', avatar: '🦁', color: '#16a34a' },
-    { slotKey: 'player_3', name: 'Nova', avatar: '🦄', color: '#eab308' },
+    { slotKey: 'player_0', name: 'You', avatar: '🥷', color: '#2563eb' },
+    { slotKey: 'player_1', name: 'Maya', avatar: '🧙', color: '#db2777' },
+    { slotKey: 'player_2', name: 'Leo', avatar: '🦸', color: '#16a34a' },
+    { slotKey: 'player_3', name: 'Nova', avatar: '👷', color: '#eab308' },
   ];
 }
 

@@ -16,7 +16,11 @@ const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const ROOM_CODE_RE = /^[A-HJ-NP-Z]{4}$/;
 const PLAYER_KEY_RE = /^player_([0-3])$/;
 const COLORS = new Set(['#2563eb', '#db2777', '#16a34a', '#eab308', '#7c3aed', '#ea580c']);
-const AVATARS = new Set(['🦊', '🐼', '🐸', '🦁', '🐙', '🦄']);
+// Must match BOTH the picker list in main.js AND the `avatar` whitelist in the
+// dots-and-boxes-rooms rules. The standard people set replaced the original
+// animals; this Set was missed, so every pick fell back to the old fox default —
+// which the rules reject — and room creation failed with permission_denied.
+const AVATARS = new Set(['🥷', '🧙', '🦸', '👷', '🤴', '👸', '🧝', '🧛']);
 const TRANSIENT_CODES = new Set([
   'database/disconnected',
   'database/network-error',
@@ -66,7 +70,7 @@ export function generateRoomCode() {
 function playerRecord(name, avatar, color, uid, joinedAt) {
   return {
     name: cleanName(name),
-    avatar: AVATARS.has(avatar) ? avatar : '🦊',
+    avatar: AVATARS.has(avatar) ? avatar : '🥷',
     color: COLORS.has(color) ? color : '#2563eb',
     uid,
     connected: true,
