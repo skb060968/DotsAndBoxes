@@ -444,9 +444,34 @@ legend {
   border-radius: clamp(8px, 1.5svh, 12px);
   box-shadow: 0 2px 8px #14213d1c;
 }
+/* Active player: a glow rather than a coloured border. The card background is
+   already a tint of --player, so a same-colour border vanished into it. A white
+   inner ring keeps the edge crisp on every colour, and the glow pulses gently so
+   it reads even on a light page. */
 .player-card.active {
-  border-color: var(--player);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--player) 45%, transparent);
+  border-color: #fff;
+  box-shadow:
+    0 0 0 2px var(--player),
+    0 0 18px 4px color-mix(in srgb, var(--player) 85%, transparent),
+    0 2px 8px #14213d1c;
+  animation: player-turn-glow 1.6s ease-in-out infinite;
+}
+@keyframes player-turn-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2px var(--player),
+      0 0 14px 3px color-mix(in srgb, var(--player) 70%, transparent),
+      0 2px 8px #14213d1c;
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px var(--player),
+      0 0 26px 8px color-mix(in srgb, var(--player) 95%, transparent),
+      0 2px 8px #14213d1c;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-card.active { animation: none; }
 }
 .player-avatar {
   font-size: clamp(1rem, 2.4svh, 1.25rem);
