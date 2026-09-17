@@ -5,11 +5,13 @@ import './diagnostics.js';
 
 import QRCode from 'qrcode';
 import { initializeBoard, renderBoardState, setActiveSpeakers } from './board-ui.js';
-import { applyMove, createGameState } from './game-engine.js';
+import { applyMove, createGameState, playerOrder } from './game-engine.js';
 import { auth, authReady } from './firebase-config.js';
 import {
   createRoom,
+  commitForfeitWin,
   commitSharedMove,
+  commitSkipOfflineTurn,
   deleteRoom,
   joinRoom,
   leavePlayer,
@@ -59,6 +61,18 @@ let voiceWidget = null;
 const LOBBY_PRUNE_DELAY_MS = 2500;
 let disconnectedSince = {};
 let lobbyPruneTimer = null;
+
+/* Offline watchdog (gameplay). There is no host loop in this game — every player
+   commits their own move — so the FIRST CONNECTED player in turn order acts as
+   the watchdog: after the grace period they pass the turn over an offline player,
+   or, if they are the only one left, take the win. */
+const OFFLINE_GRACE_MS = 15000;   // survive a lift/tunnel, but don't leave the table dead
+const MAX_OFFLINE_SKIPS = 2;      // after this many consecutive misses, skip without waiting
+let offlineTurnTimer = null;
+let offlineTurnKey = null;        // generation the timer was armed for
+let offlineSkips = {};            // slotKey -> consecutive skipped turns
+
+const localKey = () => (playerIndex != null ? `player_${playerIndex}` : null);
 
 function saveSession() {
   if (roomCode && playerIndex !== null) {
@@ -148,11 +162,126 @@ function releaseRoomState() {
   displayedRound = null;
   resultsRound = null;
   pendingResultsRound = null;
+  clearOfflineTurnWatch();
+  offlineSkips = {};
+  updateSkipOfflineButton();
 }
 
 function cleanupAndGoHome() {
   releaseRoomState();
   showScreen('home');
+}
+
+/* ======= OFFLINE WATCHDOG (gameplay) ======= */
+
+/** A PEER (never this device) is offline. While a device is itself offline its own
+ *  slot can read `connected: false` from its queued presence write, so it must never
+ *  treat *itself* as the dropped player. */
+function peerOffline(key) {
+  if (!key || key === localKey()) return false;
+  return players.find((p) => p.slotKey === key)?.connected === false;
+}
+
+/** Seats actually in this game (players who were offline at start are not dealt in). */
+function gameSeats(game = currentGame) {
+  return playerOrder(game).filter((key) => players.some((p) => p.slotKey === key));
+}
+
+/** The one device that runs the watchdog: the first connected seat in turn order. */
+function watchdogKey() {
+  return gameSeats().find((key) => key === localKey() || !peerOffline(key)) || null;
+}
+
+const gameIsLive = () => Boolean(roomCode) && Boolean(currentGame) && currentGame.status === 'playing';
+const turnGeneration = (g) => `${g.roundId}:${g.revision}:${g.currentPlayerKey}`;
+
+/** True when this device is the ONLY connected seat in a live game with 2+ seats. */
+function canClaimWin() {
+  if (!gameIsLive()) return false;
+  const seats = gameSeats();
+  return seats.length >= 2 && seats.includes(localKey()) && seats.every((key) => key === localKey() || peerOffline(key));
+}
+
+function clearOfflineTurnWatch() {
+  if (offlineTurnTimer) { clearTimeout(offlineTurnTimer); offlineTurnTimer = null; }
+  offlineTurnKey = null;
+}
+
+/** Re-evaluated on every room snapshot: arm, re-arm or cancel the watchdog. */
+function evaluateOfflineWatch() {
+  if (!gameIsLive() || watchdogKey() !== localKey()) { clearOfflineTurnWatch(); updateSkipOfflineButton(); return; }
+
+  const cur = currentGame.currentPlayerKey;
+  if (canClaimWin()) {
+    const gen = `${currentGame.roundId}:claim`;
+    if (offlineTurnKey !== gen) {
+      clearOfflineTurnWatch();
+      offlineTurnKey = gen;
+      offlineTurnTimer = setTimeout(() => { offlineTurnTimer = null; claimWinAsRemainingPlayer(); }, OFFLINE_GRACE_MS);
+    }
+  } else if (peerOffline(cur)) {
+    const gen = turnGeneration(currentGame);
+    if (offlineTurnKey !== gen) {
+      clearOfflineTurnWatch();
+      offlineTurnKey = gen;
+      // Someone who has already missed their last turns is gone for good: don't
+      // make the table wait a full grace period every lap.
+      const wait = (offlineSkips[cur] || 0) >= MAX_OFFLINE_SKIPS ? 0 : OFFLINE_GRACE_MS;
+      offlineTurnTimer = setTimeout(() => { offlineTurnTimer = null; skipOfflineTurn(gen); }, wait);
+    }
+  } else {
+    if (cur) offlineSkips[cur] = 0;          // present again — forgive earlier misses
+    clearOfflineTurnWatch();
+  }
+  updateSkipOfflineButton();
+}
+
+async function skipOfflineTurn(gen) {
+  if (!gameIsLive() || turnGeneration(currentGame) !== gen) return;   // play already moved on
+  const cur = currentGame.currentPlayerKey;
+  if (!peerOffline(cur)) return;                                        // came back in time
+  const name = players.find((p) => p.slotKey === cur)?.name || 'That player';
+  try {
+    const next = await commitSkipOfflineTurn(roomCode, playerIndex, currentGame.revision);
+    if (next) {
+      offlineSkips[cur] = (offlineSkips[cur] || 0) + 1;
+      showToast(`${name} is offline — turn skipped.`, 2600);
+    }
+  } catch (error) {
+    console.error('Skip offline turn failed:', error);
+  }
+}
+
+async function claimWinAsRemainingPlayer() {
+  if (!canClaimWin()) return;
+  clearOfflineTurnWatch();
+  try {
+    const next = await commitForfeitWin(roomCode, playerIndex, currentGame.revision);
+    if (next) showToast('Everyone else went offline — you win.', 3500);
+  } catch (error) {
+    console.error('Claim win failed:', error);
+    showToast('Could not claim the win — try again.', 3000);
+  }
+}
+
+/** Shortcut so the watchdog player need not sit out the grace period. */
+function updateSkipOfflineButton() {
+  const btn = document.getElementById('btn-skip-offline');
+  if (!btn) return;
+  const mine = gameIsLive() && watchdogKey() === localKey();
+  if (mine && canClaimWin()) {
+    btn.hidden = false;
+    btn.textContent = '🏁 Claim win';
+    btn.title = 'Everyone else is offline — take the win now';
+    return;
+  }
+  const cur = mine ? currentGame.currentPlayerKey : null;
+  const show = Boolean(cur) && peerOffline(cur);
+  btn.hidden = !show;
+  if (!show) return;
+  const name = players.find((p) => p.slotKey === cur)?.name || 'player';
+  btn.textContent = `⏭ Skip ${name}`;
+  btn.title = `${name} is offline — pass the turn now`;
 }
 
 /* ======= VOICE CHAT (optional, LiveKit, voice-only) =======
@@ -291,6 +420,7 @@ async function setupLobby() {
     },
     onGameUpdate: (gameState) => {
       currentGame = gameState;
+      evaluateOfflineWatch();   // `players` is already refreshed for this snapshot
       if (gameState.status === 'finished') {
         if (displayedRound === gameState.roundId) renderBoardState(gameState);
         if (pendingResultsRound !== gameState.roundId && resultsRound !== gameState.roundId) {
@@ -305,6 +435,9 @@ async function setupLobby() {
       if (status === 'active' && room.game) enterSharedGame(room.game);
       if (status === 'lobby' && !leavingRoom) {
         currentGame = null;
+        clearOfflineTurnWatch();
+        offlineSkips = {};
+        updateSkipOfflineButton();
         displayedRound = null;
         resultsRound = null;
         pendingResultsRound = null;
@@ -435,9 +568,16 @@ function showSharedResults(gameState) {
   const winners = players.filter((player) => gameState.winnerKeys?.[player.slotKey]);
   const highest = Math.max(...players.map((player) => Number(gameState.scores?.[player.slotKey] || 0)));
   const names = winners.map((winner) => winner.name);
-  document.getElementById('result-summary').textContent = names.length === 1
-    ? `${names[0]} wins with ${highest} boxes!`
-    : `${names.join(' and ')} tie with ${highest} boxes!`;
+  const summary = document.getElementById('result-summary');
+  if (gameState.operation?.type === 'forfeit') {
+    // The win came from everyone else dropping out, not from the board — say so,
+    // otherwise the result looks like it came from nowhere.
+    summary.textContent = `${names[0] || 'The remaining player'} wins — everyone else went offline.`;
+  } else {
+    summary.textContent = names.length === 1
+      ? `${names[0]} wins with ${highest} boxes!`
+      : `${names.join(' and ')} tie with ${highest} boxes!`;
+  }
   renderResultStandings(gameState);
   const playAgain = document.getElementById('play-again');
   playAgain.hidden = !isHost;
@@ -664,6 +804,15 @@ function wire() {
     if (!confirmed) return;
     await leaveCurrentRoom();
   };
+  // Resolve a stalled turn at once rather than waiting out the grace period.
+  document.getElementById('btn-skip-offline')?.addEventListener('click', () => {
+    if (!gameIsLive() || watchdogKey() !== localKey()) return;
+    if (canClaimWin()) { claimWinAsRemainingPlayer(); return; }
+    const gen = turnGeneration(currentGame);
+    if (!peerOffline(currentGame.currentPlayerKey)) return;
+    clearOfflineTurnWatch();
+    skipOfflineTurn(gen);
+  });
   wireShare();
   wireMute();
 }

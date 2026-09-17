@@ -1,5 +1,5 @@
 import { auth, authReady, db } from './firebase-config.js';
-import { applyMove, createGameState } from './game-engine.js';
+import { applyForfeit, applyMove, applySkip, createGameState } from './game-engine.js';
 import {
   get,
   off,
@@ -355,6 +355,37 @@ export async function commitSharedMove(roomCode, playerIndex, expectedRevision, 
   }, { applyLocally: false });
   if (!result.committed) throw moveError || new Error('The turn changed — try again.');
   return result.snapshot.val();
+}
+
+/* Offline watchdog writes. Both are pinned to `expectedRevision` so that when
+   several connected devices notice the same stall, only the first commit lands
+   and the rest abort quietly (the turn has already moved on). The rules check
+   the `connected` flags — the client just has to agree with them. */
+
+/** Advance the turn past the offline current player. Returns null if the game moved on. */
+export async function commitSkipOfflineTurn(roomCode, playerIndex, expectedRevision) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const key = playerKeyFor(playerIndex);
+  if (!PLAYER_KEY_RE.test(key)) throw new Error('Invalid player slot.');
+  const result = await runTransaction(ref(db, `${roomPath(code)}/game`), (current) => {
+    if (!current || current.status !== 'playing' || current.revision !== expectedRevision) return undefined;
+    try { return applySkip(current, key, user.uid, now()); } catch (_) { return undefined; }
+  }, { applyLocally: false });
+  return result.committed ? result.snapshot.val() : null;
+}
+
+/** Finish the game with this player as the winner — everyone else is offline. */
+export async function commitForfeitWin(roomCode, playerIndex, expectedRevision) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const key = playerKeyFor(playerIndex);
+  if (!PLAYER_KEY_RE.test(key)) throw new Error('Invalid player slot.');
+  const result = await runTransaction(ref(db, `${roomPath(code)}/game`), (current) => {
+    if (!current || current.status !== 'playing' || current.revision !== expectedRevision) return undefined;
+    try { return applyForfeit(current, key, user.uid, now()); } catch (_) { return undefined; }
+  }, { applyLocally: false });
+  return result.committed ? result.snapshot.val() : null;
 }
 
 export async function resetSharedGame(roomCode) {

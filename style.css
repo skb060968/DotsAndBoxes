@@ -656,6 +656,19 @@ legend {
   padding: 0;
   box-shadow: 0 2px 6px #14213d22;
 }
+/* Offline watchdog shortcut: shown to the acting player only while the current
+   player is offline ("Skip <name>") or everyone else is ("Claim win"). */
+.skip-offline {
+  height: clamp(30px, 4.8svh, 34px);
+  padding: 0 clamp(10px, 2svh, 14px);
+  border: 0; border-radius: 999px;
+  background: #f59e0b; color: #14213d;
+  font: inherit; font-size: clamp(0.78rem, 1.9svh, 0.9rem); font-weight: 800;
+  white-space: nowrap; cursor: pointer;
+  box-shadow: 0 2px 6px #14213d22;
+}
+.skip-offline:active { transform: scale(0.96); }
+
 .end-game {
   margin-left: auto;
   width: clamp(30px, 4.8svh, 34px);

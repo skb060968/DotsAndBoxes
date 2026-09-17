@@ -123,3 +123,50 @@ export function applyMove(game, playerKey, start, end, ownerUid, timestamp = Dat
   }
   return result;
 }
+
+/* ---------------------------------------------------------------------------
+ * Offline watchdog operations. Dots and Boxes has no host-driven game loop —
+ * every player writes their own move — so when the player whose turn it is
+ * drops offline, another connected player has to move the game along. Both
+ * operations leave the board (edges/boxes/scores/edgeCount) untouched, clear
+ * `lastMove` (nothing to animate), and record who acted in `operation.actorKey`.
+ * The security rules only accept them while the affected players read
+ * `connected: false`.
+ * ------------------------------------------------------------------------- */
+
+/** Pass the turn over an offline player. `actorKey` is the connected player doing it. */
+export function applySkip(game, actorKey, ownerUid, timestamp = Date.now()) {
+  if (!game || game.status !== 'playing') throw new Error('The game is not active.');
+  const order = playerOrder(game);
+  const skippedKey = order[game.currentPlayerIndex];
+  if (!skippedKey || skippedKey === actorKey) throw new Error('Nothing to skip.');
+  const revision = Number(game.revision || 0) + 1;
+  const nextIndex = (game.currentPlayerIndex + 1) % order.length;
+  const result = {
+    ...game,
+    revision,
+    currentPlayerIndex: nextIndex,
+    currentPlayerKey: order[nextIndex],
+    operation: { type: 'skip', ownerUid, playerKey: skippedKey, actorKey, revision, timestamp },
+  };
+  delete result.lastMove;
+  return result;
+}
+
+/** End the game in favour of `actorKey`, the only player still connected. */
+export function applyForfeit(game, actorKey, ownerUid, timestamp = Date.now()) {
+  if (!game || game.status !== 'playing') throw new Error('The game is not active.');
+  const order = playerOrder(game);
+  if (!order.includes(actorKey)) throw new Error('Not a player in this game.');
+  const revision = Number(game.revision || 0) + 1;
+  const result = {
+    ...game,
+    status: 'finished',
+    revision,
+    operation: { type: 'forfeit', ownerUid, playerKey: order[game.currentPlayerIndex], actorKey, revision, timestamp },
+    winnerKeys: { [actorKey]: true },
+    endedAt: timestamp,
+  };
+  delete result.lastMove;
+  return result;
+}
