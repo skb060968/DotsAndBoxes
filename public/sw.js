@@ -1,5 +1,7 @@
-const CACHE_NAME = 'dots-and-boxes-v7';
-// music.mp3 (~6 MB) is streamed with Range requests: not precached (see fetch).
+const CACHE_NAME = 'dots-and-boxes-v8';
+// music.mp3 (~6 MB) is streamed with Range requests: never precached or
+// runtime-cached (see fetch). Only the short effects are cached.
+const NO_CACHE_AUDIO = new Set(['/sounds/music.mp3']);
 const SHELL = [
   '/', '/index.html', '/manifest.json',
   '/icons/icon-192.png', '/icons/icon-512.png',
@@ -27,6 +29,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
+  // Large audio goes straight to the network, with or without a Range header.
+  if (NO_CACHE_AUDIO.has(url.pathname)) return;
   // Media elements use Range requests; pass them straight to the network
   // (never cached, never answered with a full cached 200).
   if (event.request.headers.has('range')) {
