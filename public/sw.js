@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dots-and-boxes-v8';
+const CACHE_NAME = 'dots-and-boxes-v9';
 // music.mp3 (~6 MB) is streamed with Range requests: never precached or
 // runtime-cached (see fetch). Only the short effects are cached.
 const NO_CACHE_AUDIO = new Set(['/sounds/music.mp3']);
