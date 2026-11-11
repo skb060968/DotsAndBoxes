@@ -61,7 +61,10 @@ function paintSelection() {
 function renderCards() {
   const currentKey = activeKey();
   cards.replaceChildren();
-  players.forEach((player) => {
+  // Only seats dealt into this game (players offline at Start are not in the order).
+  const order = playerOrder(game);
+  const seated = order.length ? players.filter((player) => order.includes(player.slotKey)) : players;
+  seated.forEach((player) => {
     const score = Number(game?.scores?.[player.slotKey] || 0);
     const card = document.createElement('article');
     card.className = `player-card${game?.status === 'playing' && player.slotKey === currentKey ? ' active' : ''}`;
@@ -287,12 +290,17 @@ export function renderBoardState(nextGame, options = {}) {
   const previousBoxCount = renderedBoxes.size;
   Object.entries(game.boxes || {}).forEach(([key, owner]) => addBox(key, owner));
   if (shouldAnimate && renderedBoxes.size > previousBoxCount) playSound('boxclaim');
+  // Presence-only snapshots (same revision) must not drop a chosen dot or unlock
+  // a move that is still in flight (a second tap would send a second move).
+  const revisionChanged = Number(game.revision || 0) !== renderedRevision;
   renderedRevision = Number(game.revision || 0);
-  selected = null;
-  locked = false;
+  if (revisionChanged) {
+    selected = null;
+    locked = false;
+  }
   renderCards();
   paintSelection();
-  announceTurn();
+  if (revisionChanged || (!locked && selected === null)) announceTurn();
 }
 
 export function initializeBoard(options = {}) {

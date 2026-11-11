@@ -34,8 +34,32 @@ const roomPath = (code) => `${ROOM_PATH}/${normalizeRoomCode(code)}`;
 const playerKeyFor = (index) => `player_${index}`;
 const playerIndexFrom = (key) => Number.parseInt(key.slice(7), 10);
 const cleanName = (value, fallback = 'Player') => (String(value || '').trim() || fallback).slice(0, 16);
-const now = () => Date.now();
 let stopPresence = null;
+
+/* Server-corrected clock. The rules check lastActivity / operation.timestamp /
+   endedAt against the server's `now`, so a phone clock that is off by a minute
+   must not be used directly. The offset listener starts at module load, before
+   any write; writes wait briefly for the first value (see requireUser). */
+let serverOffsetMs = 0;
+let clockKnown = false;
+let resolveClock;
+const clockReady = new Promise((resolve) => { resolveClock = resolve; });
+onValue(ref(db, '.info/serverTimeOffset'), (snapshot) => {
+  const value = snapshot.val();
+  if (Number.isFinite(value)) {
+    serverOffsetMs = value;
+    clockKnown = true;
+    resolveClock();
+  }
+});
+const now = () => Date.now() + serverOffsetMs;
+const CLOCK_WAIT_MS = 3000;
+function waitForClock() {
+  if (clockKnown) return Promise.resolve();
+  return Promise.race([clockReady, new Promise((resolve) => setTimeout(resolve, CLOCK_WAIT_MS))]);
+}
+/** lastActivity may never go backwards (rules), even if the clock offset shifts. */
+const activityStamp = (meta, timestamp) => Math.max(timestamp, Number(meta?.lastActivity) || 0);
 
 export function normalizeRoomCode(value) {
   const code = String(value || '').trim().toUpperCase();
@@ -46,6 +70,7 @@ export function normalizeRoomCode(value) {
 async function requireUser() {
   const user = await authReady;
   if (!user?.uid || auth.currentUser?.uid !== user.uid) throw new Error('Authentication unavailable');
+  await waitForClock();
   return user;
 }
 
@@ -143,7 +168,8 @@ export async function joinRoom(roomCode, playerName, playerAvatar, playerColor) 
       );
       if (result.committed) return { success: true, playerIndex: index };
     } catch (error) {
-      if (!String(error?.code || '').toLowerCase().includes('permission-denied')) throw error;
+      // RTDB transactions report 'PERMISSION_DENIED' (other APIs 'permission-denied').
+      if (!`${error?.code || ''} ${error?.message || ''}`.toLowerCase().includes('permission')) throw error;
       room = (await firebaseRetry(() => get(roomRef))).val() || {};
       const owned = Object.keys(room.players || {}).find((candidate) => room.players[candidate]?.uid === user.uid);
       if (owned) return { success: true, playerIndex: playerIndexFrom(owned) };
@@ -249,6 +275,19 @@ export async function leavePlayer(roomCode, playerIndex) {
   await firebaseRetry(() => remove(ref(db, `${roomPath(code)}/players/${key}`)));
 }
 
+/** Leave a running game: the rules keep the seat until the game ends, so the
+ *  player just marks themselves offline (the offline watchdog then skips them). */
+export async function markSelfOffline(roomCode, playerIndex) {
+  const user = await requireUser();
+  const code = normalizeRoomCode(roomCode);
+  const key = playerKeyFor(playerIndex);
+  if (!PLAYER_KEY_RE.test(key)) throw new Error('Invalid player slot.');
+  await stopPresenceTracking();
+  const snapshot = await firebaseRetry(() => get(ref(db, `${roomPath(code)}/players/${key}/uid`)));
+  if (snapshot.val() !== user.uid) return;
+  await firebaseRetry(() => set(ref(db, `${roomPath(code)}/players/${key}/connected`), false));
+}
+
 export async function removePlayer(roomCode, playerIndex) {
   await requireUser();
   const key = playerKeyFor(playerIndex);
@@ -330,7 +369,7 @@ export async function startSharedGame(roomCode) {
     const timestamp = now();
     return {
       ...current,
-      meta: { ...current.meta, status: 'active', lastActivity: timestamp },
+      meta: { ...current.meta, status: 'active', lastActivity: activityStamp(current.meta, timestamp) },
       game: createGameState(playerKeys, user.uid, timestamp),
     };
   }, { applyLocally: false }));
@@ -395,7 +434,7 @@ export async function resetSharedGame(roomCode) {
     if (!current || current.meta?.hostUid !== user.uid || current.game?.status !== 'finished') return undefined;
     const next = {
       ...current,
-      meta: { ...current.meta, status: 'lobby', lastActivity: now() },
+      meta: { ...current.meta, status: 'lobby', lastActivity: activityStamp(current.meta, now()) },
     };
     delete next.game;
     return next;

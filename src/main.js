@@ -16,6 +16,7 @@ import {
   joinRoom,
   leavePlayer,
   listenRoom,
+  markSelfOffline,
   normalizeRoomCode,
   removePlayer,
   resetSharedGame,
@@ -516,7 +517,11 @@ function enterSharedGame(gameState) {
   if (wasHidden) refitGameScreen();
   startBackgroundMusic();
   mountVoice();
-  document.getElementById('end-game').hidden = !isHost;
+  // ✕ for everyone: the host ends the game, other players leave it.
+  const endButton = document.getElementById('end-game');
+  endButton.hidden = false;
+  endButton.title = isHost ? 'End game' : 'Leave game';
+  endButton.setAttribute('aria-label', endButton.title);
   const localKey = `player_${playerIndex}`;
   if (displayedRound !== gameState.roundId) {
     displayedRound = gameState.roundId;
@@ -531,11 +536,17 @@ function enterSharedGame(gameState) {
   }
 }
 
+/** Room players who were dealt into this game (offline-at-Start players are not). */
+function playersInGame(gameState) {
+  const order = playerOrder(gameState);
+  return order.length ? players.filter((player) => order.includes(player.slotKey)) : players;
+}
+
 function renderResultStandings(gameState) {
   const list = document.getElementById('result-standings');
   if (!list) return;
   list.replaceChildren();
-  const ranked = players
+  const ranked = playersInGame(gameState)
     .map((player) => ({ ...player, boxes: Number(gameState.scores?.[player.slotKey] || 0) }))
     .sort((a, b) => b.boxes - a.boxes);
   ranked.forEach((player, index) => {
@@ -565,8 +576,9 @@ function showSharedResults(gameState) {
   currentGame = gameState;
   pendingResultsRound = null;
   stopBackgroundMusic();
-  const winners = players.filter((player) => gameState.winnerKeys?.[player.slotKey]);
-  const highest = Math.max(...players.map((player) => Number(gameState.scores?.[player.slotKey] || 0)));
+  const seated = playersInGame(gameState);
+  const winners = seated.filter((player) => gameState.winnerKeys?.[player.slotKey]);
+  const highest = Math.max(...seated.map((player) => Number(gameState.scores?.[player.slotKey] || 0)));
   const names = winners.map((winner) => winner.name);
   const summary = document.getElementById('result-summary');
   if (gameState.operation?.type === 'forfeit') {
@@ -796,7 +808,22 @@ function wire() {
     }
   };
   document.getElementById('end-game').onclick = async () => {
-    if (!isHost) return;
+    if (!isHost) {
+      if (!roomCode || playerIndex === null) return;
+      const leave = await showConfirm('Leave this game? The others keep playing.', {
+        confirmText: 'Leave',
+        cancelText: 'Keep playing',
+      });
+      if (!leave) return;
+      if (!gameIsLive()) { await leaveCurrentRoom(); return; }
+      // Mid-game the rules keep the seat, so mark it offline (the watchdog
+      // skips it) instead of removing it, then go home.
+      leavingRoom = true;
+      try { await markSelfOffline(roomCode, playerIndex); }
+      catch (error) { console.error('Leave game failed:', error); }
+      cleanupAndGoHome();
+      return;
+    }
     const confirmed = await showConfirm('End this game for everyone?', {
       confirmText: 'End game',
       cancelText: 'Keep playing',
